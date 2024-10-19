@@ -26,7 +26,7 @@ function LandingPage() {
         <p>Take the first step in reducing your environmental impact today.</p>
         <button>Get Started</button>
         {/* Image placed here. May change in the future. */}
-        <img src={EarthRecycle} alt="Description of the image" className="landing-image" />
+        <img src={EarthRecycle} alt="Earth Image for Landing Page" className="landing-image" />
       </section>
 
       <section id="features" className="features-section">
