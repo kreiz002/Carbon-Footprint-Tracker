@@ -1,0 +1,93 @@
+/* src/components/LandingPage.css */
+
+.landing-page {
+    text-align: center;
+    font-family: Arial, sans-serif;
+  }
+  
+  .navbar {
+    background-color: #282f34;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .navbar h1 {
+    color: white;
+  }
+  
+  .navbar nav ul {
+    list-style: none;
+    display: flex;
+    gap: 1.5rem;
+  }
+  
+  .navbar nav ul li a {
+    color: white;
+    text-decoration: none;
+  }
+  
+  .hero-section {
+    padding: 4rem;
+    background-color: #f0f4f8;
+  }
+  
+  .hero-section h2 {
+    font-size: 2.5rem;
+  }
+  
+  .hero-section p {
+    font-size: 1.2rem;
+    margin: 1rem 0;
+  }
+  
+  .hero-section button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  
+  .hero-section button:hover {
+    background-color: #45a049;
+  }
+  
+  .features-section {
+    padding: 3rem;
+    background-color: white;
+  }
+  
+  .features-section h3 {
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .features-section ul {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  .features-section ul li {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+  }
+  
+  .footer {
+    background-color: #282c34;
+    color: white;
+    padding: 1rem;
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+  }
+  .landing-image {
+    width: 100%;
+    max-width: 250px;
+    margin: 2rem auto;
+    display: block;
+  }
+  
+  
