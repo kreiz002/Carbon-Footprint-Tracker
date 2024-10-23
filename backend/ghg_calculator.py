@@ -81,8 +81,7 @@ class Producer:
         
         
 class Vehicle(Producer):
-    def __init__(self, miles_per_week, avg_fuel_efficiency, maintenance):
-        super().__init__(self)
+    def __init__(self, habitants, zip, heat_src, miles_per_week, avg_fuel_efficiency, maintenance):
         self.miles_per_week = miles_per_week
         self.avg_fuel_efficiency = avg_fuel_efficiency
         self.maintenance = maintenance
@@ -101,8 +100,8 @@ class Vehicle(Producer):
         return round(emmissions)
     
 class HomeEnergy(Producer):
-    def __init__(self):
-        super().__init__(self)
+    def __init__(self, habitants, zip, heat_src):
+        Producer.__init__(self, habitants, zip, heat_src)
 
     def egrid_lookup(zip):
         egrid = pd.read_excel('EGRID_DATA.xlsx')
@@ -133,9 +132,11 @@ class HomeEnergy(Producer):
 
 
 
-v1 = Vehicle(75, 21.6, 1)
 
-h1 = HomeEnergy(zip=33178)
+v1 = Vehicle(1, 33178, 2, 75, 21.6, 1)
+v1.zip = 33178
+
+h1 = HomeEnergy(1, 33178, 2)
 
 print(v1.emmissions())
 print(v1.emmissions_maintenance())
