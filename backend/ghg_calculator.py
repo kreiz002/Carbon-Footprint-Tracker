@@ -1,4 +1,6 @@
 
+import pandas as pd
+
 #REFER TO SHEET1 FROM GHG CALCULATOR.XLSX=====================================================================
 AC_electricity_percent=0.14
 Average_elec_CO2_emissions=14019.99772
@@ -76,13 +78,9 @@ class Producer:
         self.habitants = habitants
         self.zip = zip
         self.heat_src = heat_src  #Enter 1 for natural gas, 2 for electric heat, 3 for oil, 4 for propane, 5 for wood, or 6 if you do not heat your house
-
         
-class Source:
-    def __init__(self, type):
-        self.type = type
         
-class Vehicle(Source):
+class Vehicle(Producer):
     def __init__(self, miles_per_week, avg_fuel_efficiency, maintenance):
         super().__init__(self)
         self.miles_per_week = miles_per_week
@@ -92,7 +90,41 @@ class Vehicle(Source):
     def emmissions(self):
         miles_per_year = self.miles_per_week*52
         emmissions = miles_per_year * (1/self.avg_fuel_efficiency) * EF_passenger_vehicle * nonCO2_vehicle_emissions_ratio #19.6, 1.01
-        return emmissions
+        efficiency = emmissions * vehicle_efficiency_improvements
+        emmissions += efficiency
+        return round(emmissions)
+
+    def emmissions_maintenance(self):
+        miles_per_year = self.miles_per_week*52
+        emmissions = (miles_per_year/self.avg_fuel_efficiency) * EF_passenger_vehicle * nonCO2_vehicle_emissions_ratio #19.6, 1.01
+
+        return round(emmissions)
+    
+class HomeEnergy(Producer):
+    def __init__(self):
+        super().__init__(self)
+
+    def egrid_lookup(zip):
+        egrid = pd.read_excel('EGRID_DATA.xlsx')
+        #egrid[egrid['Zip'] == zip]
+        lookup = egrid.iloc[zip, 'Subregion annual CO2e output emission rate (lb/MWh)']
+        return lookup
+    
+    def natural_gas_consumption(self, option, input):
+        if option==1:
+            emissions = (input/Natural_gas_cost_1000CF) * EF_natural_gas * 12
+        elif option==2:
+            emissions = EF_natural_gas * input * 12
+        elif option==3:
+            emissions = EF_natural_gas_therm * input * 12
+        else:
+            emissions = "Only allowed number 1, 2, or 3."
+        
+        return emissions
+    
+    def electricity_consumption(self, option, input):
+        if option==1:
+            emissions = (input/cost_per_kWh) * e_factor_value
 
 
 
@@ -103,4 +135,9 @@ class Vehicle(Source):
 
 v1 = Vehicle(75, 21.6, 1)
 
+h1 = HomeEnergy(zip=33178)
+
 print(v1.emmissions())
+print(v1.emmissions_maintenance())
+
+print(h1.egrid_lookup)
