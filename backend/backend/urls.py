@@ -20,5 +20,5 @@ from django.shortcuts import render
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path('carbon/', include('carbon.urls')),
+    path('', include('carbon.urls')),
 ]
