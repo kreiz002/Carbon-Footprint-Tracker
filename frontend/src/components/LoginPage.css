@@ -1,0 +1,49 @@
+/* src/components/LoginPage.css */
+
+.login-page {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 2rem;
+    text-align: center;
+  }
+  
+  .login-page h2 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: #4CAF50;
+  }
+  
+  .login-page form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .login-page label {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    font-size: 1rem;
+  }
+  
+  .login-page input {
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  
+  .login-page button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 0.8rem;
+    font-size: 1rem;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .login-page button:hover {
+    background-color: #45a049;
+  }
+  
