@@ -1,0 +1,47 @@
+/* src/components/AboutPage.css */
+
+.about-page {
+    font-family: Arial, sans-serif;
+    padding: 2rem;
+    text-align: center;
+  }
+  
+  .about-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: #4CAF50;
+  }
+  
+  .about-content {
+    margin: 0 auto;
+    max-width: 800px;
+    text-align: left;
+  }
+  
+  .about-content h2 {
+    color: #333;
+    margin-top: 2rem;
+  }
+  
+  .about-content p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+  }
+  
+  .about-content ul {
+    list-style-type: disc;
+    margin-left: 2rem;
+  }
+  
+  .about-content li {
+    margin: 0.5rem 0;
+  }
+  
+
+.carbon-footprint-image {
+    width: 100%;
+    max-width: 1000px; 
+    margin: 2rem auto 0;
+    display: block;
+  }
+  

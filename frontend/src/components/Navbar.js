@@ -1,16 +1,22 @@
-// Will make this a global navbar in a later sprint
+// src/components/Navbar.js
 
 import React from 'react';
+import { Link } from 'react-router-dom';
+import './Navbar.css'; 
 
 function Navbar() {
   return (
-    <nav>
-      <ul>
-        <li>Home</li>
-        <li>About</li>
-        <li>Profile</li>
-      </ul>
-    </nav>
+    <header className="navbar">
+      <h1>Carbon Footprint Tracker</h1>
+      <nav>
+        <ul>
+          <li><Link to="/about">About</Link></li>
+          <li><Link to="/signup">Sign Up</Link></li>
+          <li><Link to="/login">Log In</Link></li>
+          <li><Link to="/Dashboard">Dashboard</Link></li>
+        </ul>
+      </nav>
+    </header>
   );
 }
 
