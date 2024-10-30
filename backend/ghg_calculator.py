@@ -100,8 +100,10 @@ class Vehicle(Producer):
         return round(emmissions)
     
 class HomeEnergy(Producer):
-    def __init__(self, habitants, zip, heat_src):
+    def __init__(self, habitants, zip, heat_src, green_power=False, portion_green=0):
         Producer.__init__(self, habitants, zip, heat_src)
+        self.green_power = green_power
+        self.portion_green = portion_green
 
     def egrid_lookup(self):
         egrid = pd.read_excel('C:\\Users\\Kat\\OneDrive\\Documents\\GitHub\\Carbon-Footprint-Tracker\\backend\\EGRID_DATA.xlsx')
@@ -111,20 +113,34 @@ class HomeEnergy(Producer):
         return round(e_factor_value, 3)
     
     def natural_gas_consumption(self, option, input):
-        if option==1:
+        if option==1: #dollars
             emissions = (input/Natural_gas_cost_1000CF) * EF_natural_gas * 12
-        elif option==2:
+        elif option==2: #thousand cubic ft
             emissions = EF_natural_gas * input * 12
-        elif option==3:
-            emissions = EF_natural_gas_therm * input * 12
-        else:
-            emissions = "Only allowed number 1, 2, or 3."
-        
+        elif option==3: #therms
+            emissions = EF_natural_gas_therm * input * 12  
+        return round(emissions)
+    
+    def electricity_consumption(self, option, input, e_factor_value):
+        if option==1: #dollars
+            emissions = (input/cost_per_kWh) * e_factor_value * 12
+        elif option==2: #kWh
+            emissions = input * e_factor_value * 12
+        return round(emissions)
+    
+    def oil_consumption(self, option, input):
+        if option==1: #dollars
+            emissions = (input/fuel_oil_cost) * EF_fuel_oil_gallon * 12
+        elif option==2: #gallons
+            emissions = EF_fuel_oil_gallon * input * 12
         return emissions
     
-    # def electricity_consumption(self, option, input):
-    #     if option==1:
-    #         emissions = (input/cost_per_kWh) * e_factor_value
+    def propane_consumption(self, option, input):
+        if option==1: #dollars
+            emissions = (input/propane_cost) * EF_propane * 12
+        elif option==2: #gallons
+            emissions = EF_propane * input * 12
+        return emissions
 
 
 
@@ -137,10 +153,11 @@ class HomeEnergy(Producer):
 v1 = Vehicle(1, 33178, 2, 75, 21.6, 1)
 v1.zip = 33178
 
-h1 = HomeEnergy(1, 33178, 2)
+h1 = HomeEnergy(1, 33178, 2, False, 0)
 
 print(h1.zip)
 print(v1.emmissions())
 print(v1.emmissions_maintenance())
 
 print(h1.egrid_lookup())
+print(h1.electricity_consumption(2, 44, h1.egrid_lookup()))
