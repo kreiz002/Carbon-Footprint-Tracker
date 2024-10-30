@@ -103,11 +103,12 @@ class HomeEnergy(Producer):
     def __init__(self, habitants, zip, heat_src):
         Producer.__init__(self, habitants, zip, heat_src)
 
-    def egrid_lookup(zip):
-        egrid = pd.read_excel('EGRID_DATA.xlsx')
-        #egrid[egrid['Zip'] == zip]
-        lookup = egrid.iloc[zip, 'Subregion annual CO2e output emission rate (lb/MWh)']
-        return lookup
+    def egrid_lookup(self):
+        egrid = pd.read_excel('C:\\Users\\Kat\\OneDrive\\Documents\\GitHub\\Carbon-Footprint-Tracker\\backend\\EGRID_DATA.xlsx')
+        lookup = egrid.loc[egrid['Zip'] == self.zip]
+        e_factor = lookup['Vlookup (e_factor)'].item()
+        e_factor_value = e_factor/1000
+        return round(e_factor_value, 3)
     
     def natural_gas_consumption(self, option, input):
         if option==1:
@@ -121,9 +122,9 @@ class HomeEnergy(Producer):
         
         return emissions
     
-    def electricity_consumption(self, option, input):
-        if option==1:
-            emissions = (input/cost_per_kWh) * e_factor_value
+    # def electricity_consumption(self, option, input):
+    #     if option==1:
+    #         emissions = (input/cost_per_kWh) * e_factor_value
 
 
 
@@ -138,7 +139,8 @@ v1.zip = 33178
 
 h1 = HomeEnergy(1, 33178, 2)
 
+print(h1.zip)
 print(v1.emmissions())
 print(v1.emmissions_maintenance())
 
-print(h1.egrid_lookup)
+print(h1.egrid_lookup())
