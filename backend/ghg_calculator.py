@@ -82,6 +82,7 @@ class Producer:
         
 class Vehicle(Producer):
     def __init__(self, habitants, zip, heat_src, miles_per_week, avg_fuel_efficiency, maintenance):
+        Producer.__init__(self, habitants, zip, heat_src)
         self.miles_per_week = miles_per_week
         self.avg_fuel_efficiency = avg_fuel_efficiency
         self.maintenance = maintenance
@@ -142,10 +143,49 @@ class HomeEnergy(Producer):
             emissions = EF_propane * input * 12
         return emissions
 
+class Waste(Producer):
+    def __init__(self, habitants, zip, heat_src):
+        Producer.__init__(self, habitants, zip, heat_src)
+
+    def total_waste(self):
+        emissions = self.habitants * average_waste_emissions
+        return emissions
+
+    def total_waste_after_recycling(self, cans, plastic, glass, newspaper, magazines):      
+        if cans==True:
+            cans_waste = self.habitants * metal_recycling_avoided_emissions
+        else:
+            cans_waste = 0
+
+        if plastic==True:
+            plastic_waste = self.habitants * plastic_recycling_avoided_emissions
+        else:
+            plastic_waste = 0  
+
+        if glass==True:
+            glass_waste = self.habitants * glass_recycling_avoided_emissions
+        else:
+            glass_waste = 0 
+
+        if newspaper==True:
+            newspaper_waste = self.habitants * newspaper_recycling_avoided_emissions
+        else:
+            newspaper_waste = 0  
+
+        if magazines==True:
+            magazines_waste = self.habitants * mag_recycling_avoided_emissions
+        else:
+            magazines_waste = 0
+        
+        emissions = self.total_waste() + cans_waste + plastic_waste + glass_waste + newspaper_waste + magazines_waste
+        return emissions
+        
+    
 
 
-#class Home(Source):
-    #def __
+
+
+#total emissions is sum of results of all functions in child nodes
 
 
 
@@ -155,9 +195,14 @@ v1.zip = 33178
 
 h1 = HomeEnergy(1, 33178, 2, False, 0)
 
-print(h1.zip)
-print(v1.emmissions())
-print(v1.emmissions_maintenance())
+w1 = Waste(1, 33178, 1)
 
-print(h1.egrid_lookup())
-print(h1.electricity_consumption(2, 44, h1.egrid_lookup()))
+# print(h1.zip)
+# print(v1.emmissions())
+# print(v1.emmissions_maintenance())
+
+# print(h1.egrid_lookup())
+# print(h1.electricity_consumption(2, 44, h1.egrid_lookup()))
+
+print(w1.total_waste())
+print(w1.total_waste_after_recycling(True, False, False, False, False))
