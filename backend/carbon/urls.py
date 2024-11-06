@@ -7,4 +7,5 @@ urlpatterns = [
     path("session/", views.session_view, name="carbon_session"),
     path("whoami/", views.whoami_view, name="carbon_whoami"),
     path("register/", views.register_view, name="carbin_register"),
+    path("home/", views.home_view, name='carbon_home'),
 ]
