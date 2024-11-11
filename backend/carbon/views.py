@@ -93,6 +93,10 @@ def home_view(request):
         return redirect('/login/')
     return render(request, 'login/login.html')
 
+def front(request):
+    context = { }
+    return render(request, "index.html", context)
+
 @ensure_csrf_cookie
 def session_view(request):
     if not request.user.is_authenticated:
