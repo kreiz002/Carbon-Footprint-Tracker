@@ -6,23 +6,25 @@ from django.contrib.auth import authenticate, login, logout
 from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
-from .forms import RegisterForm
-
+from .forms import RegisterForm, LoginForm
+#from django.contrib.auth import Session
 import pymongo
-import urllib.parse
 
 #mongo_username = urllib.parse.quote_plus('pesco014')
 #mongo_password = urllib.parse.quote_plus('dUckyt1me')
 
 #client = pymongo.MongoClient('mongodb+srv://%s:%s@carboncluster.uf3bc.mongodb.net/?retryWrites=true&w=majority&appName=CarbonCluster' % (mongo_username, mongo_password))
-client = pymongo.MongoClient('mongodb+srv://pesco014:dUckyt1me@carboncluster.uf3bc.mongodb.net/?retryWrites=true&w=majority&appName=CarbonCluster')
+#client = pymongo.MongoClient('mongodb+srv://pesco014:dUckyt1me@carboncluster.uf3bc.mongodb.net/?retryWrites=true&w=majority&appName=CarbonCluster')
 
 
-db = client['carbon']
+#db = client['carbon']
 
-collection = db['users']
+#collection = db['users']
 
 def register_view(request):
+    client = pymongo.MongoClient('mongodb+srv://pesco014:dUckyt1me@carboncluster.uf3bc.mongodb.net/?retryWrites=true&w=majority&appName=CarbonCluster')
+    db = client['carbon']
+    collection = db['users']
     #data = json.loads(request.body)
     #username = data.get("username")
     #password = data.get("password")
@@ -33,11 +35,11 @@ def register_view(request):
             password = form.cleaned_data["password2"]
 
             collection.insert_one({
-                "username":username,
-                "password":password,
+            "username":username,
+            "password":password,
             })
 
-            return redirect('login/')
+            return redirect('/login/')
     else: 
         form = RegisterForm()
     
@@ -49,31 +51,47 @@ def register_view(request):
     
     #return JsonResponse({"detail":"User created"})
 
-@require_POST
+#@require_POST
 def login_view(request):
-    data = json.loads(request.body)
-    username = data.get("username")
-    password = data.get("password")
+    #data = json.loads(request.body)
+    #username = data.get("username")
+    #password = data.get("password")
 
-    if username is None or password is None:
-        return JsonResponse({"detail":"Please provide username and password"})
-    #user = authenticate(username=username,password=password)
-    if not collection.auth(username, password):
-        return JsonResponse({"detail":"Invalid credentials"},
-                            status=400)
-    #if user is None:
-    #    return JsonResponse({"detail":"Invalid credentials"},
-    #                        status=400)
-    user = collection.getUser(username)
-    login(request, user)
-    return JsonResponse({"details":"Successfully logged in"})
+    if request.method == "POST":
+        form = LoginForm(data=request.POST)
+
+        username = form.data["username"]
+        password = form.data["password"]
+
+        user = authenticate(request, username=username, password=password)
+
+        if user == None:
+            return JsonResponse({"detail":"Invalid credentials"},
+                                status=400)
+        request.session['user'] = username
+        return redirect('/home/')
+    else:
+        form = LoginForm()
+    #return JsonResponse({"details":"Successfully logged in"})
+
+    return render(request, "login/login.html", {"form":form})
 
 def logout_view(request):
-    if not request.user.is_authenticated:
-        return JsonResponse({"detail":"You are not logged in!"},
-                            status=400)
-    logout(request)
-    return JsonResponse({"detail":"Successfully logged out"})
+    #if not request.user.is_authenticated:
+    if 'user' in request.session:
+        #Session.objects.filter(session_key=request.session.session_key).delete()
+        del request.session['user']
+    return redirect('/home/')
+
+def home_view(request):
+    if 'user' in request.session:
+        current_user = request.session['user']
+        print(current_user)
+        param = {'current_user': current_user}
+        return render(request, 'home.html', param)
+    else:
+        return redirect('/login/')
+    return render(request, 'login/login.html')
 
 @ensure_csrf_cookie
 def session_view(request):
