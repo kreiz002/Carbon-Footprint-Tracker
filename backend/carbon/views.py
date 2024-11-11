@@ -31,11 +31,11 @@ def register_view(request):
     if request.method == "POST":
         form = RegisterForm(request.POST)
         if form.is_valid():
-            username = form.cleaned_data["username"]
+            email = form.cleaned_data["email"]
             password = form.cleaned_data["password2"]
 
             collection.insert_one({
-            "username":username,
+            "email":email,
             "password":password,
             })
 
@@ -60,15 +60,15 @@ def login_view(request):
     if request.method == "POST":
         form = LoginForm(data=request.POST)
 
-        username = form.data["username"]
+        email = form.data["username"]
         password = form.data["password"]
 
-        user = authenticate(request, username=username, password=password)
+        user = authenticate(request, email=email, password=password)
 
         if user == None:
             return JsonResponse({"detail":"Invalid credentials"},
                                 status=400)
-        request.session['user'] = username
+        request.session['user'] = email
         return redirect('/home/')
     else:
         form = LoginForm()
