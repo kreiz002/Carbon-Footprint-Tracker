@@ -7,7 +7,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 from .forms import RegisterForm, LoginForm
-from django.contrib.auth.models import User
+#from django.contrib.auth import Session
 import pymongo
 
 #mongo_username = urllib.parse.quote_plus('pesco014')
@@ -77,11 +77,11 @@ def login_view(request):
     return render(request, "login/login.html", {"form":form})
 
 def logout_view(request):
-    if not request.user.is_authenticated:
-        return JsonResponse({"detail":"You are not logged in!"},
-                            status=400)
-    logout(request)
-    return JsonResponse({"detail":"Successfully logged out"})
+    #if not request.user.is_authenticated:
+    if 'user' in request.session:
+        #Session.objects.filter(session_key=request.session.session_key).delete()
+        del request.session['user']
+    return redirect('/home/')
 
 def home_view(request):
     if 'user' in request.session:
