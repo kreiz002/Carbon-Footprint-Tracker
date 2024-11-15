@@ -31,19 +31,23 @@ def register_view(request):
     if request.method == "POST":
         form = RegisterForm(request.POST)
         if form.is_valid():
-            email = form.cleaned_data["email"]
-            password = form.cleaned_data["password2"]
+            data = json.loads(request.body)
+            name = data.get("name")
+            email = data.get("email")
+            password = data.get("password")
 
             collection.insert_one({
             "email":email,
             "password":password,
             })
 
-            return redirect('/login/')
+            return JsonResponse({"details":"Successfully registered"})
+        else:
+            return JsonResponse({"detail":"Invalid credentials"}, status=400)
     else: 
         form = RegisterForm()
     
-    return render(request, "register/register.html", {"form":form})
+    return render(request, "index.html")
 
 
     #if username is None  or password is None:
@@ -59,12 +63,11 @@ def login_view(request):
     #password = data.get("password")
 
     if request.method == "POST":
-        form = LoginForm(data=request.POST)
+        #form = LoginForm(data=request.POST)
 
         #email = form.data["username"]
         #password = form.data["password"]
         data = json.loads(request.body)
-        print(data.get('email'))
 
         email = data.get('email')
         password = data.get('password')
@@ -84,7 +87,7 @@ def login_view(request):
     #return JsonResponse({"details":"Successfully logged in"})
 
     #return render(request, "login/login.html", {"form":form})
-    return render(request, "index.html", {"form":form})
+    return render(request, "index.html")
 
 def logout_view(request):
     #if not request.user.is_authenticated:
