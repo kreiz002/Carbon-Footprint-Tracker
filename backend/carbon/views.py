@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect
 import json
 from django.contrib.auth import authenticate, login, logout
 from django.http import JsonResponse
-from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
 from django.views.decorators.http import require_POST
 from .forms import RegisterForm, LoginForm
 #from django.contrib.auth import Session
@@ -52,6 +52,7 @@ def register_view(request):
     #return JsonResponse({"detail":"User created"})
 
 #@require_POST
+@csrf_exempt
 def login_view(request):
     #data = json.loads(request.body)
     #username = data.get("username")
@@ -60,8 +61,13 @@ def login_view(request):
     if request.method == "POST":
         form = LoginForm(data=request.POST)
 
-        email = form.data["username"]
-        password = form.data["password"]
+        #email = form.data["username"]
+        #password = form.data["password"]
+        data = json.loads(request.body)
+        print(data.get('email'))
+
+        email = data.get('email')
+        password = data.get('password')
 
         user = authenticate(request, email=email, password=password)
 
@@ -69,12 +75,16 @@ def login_view(request):
             return JsonResponse({"detail":"Invalid credentials"},
                                 status=400)
         request.session['user'] = email
-        return redirect('/home/')
+        #return redirect('/')
+        return JsonResponse({"details":"Successfully logged in"})
+        #return redirect("/")
     else:
         form = LoginForm()
+        #return JsonResponse({"details":"not a POST"})
     #return JsonResponse({"details":"Successfully logged in"})
 
-    return render(request, "login/login.html", {"form":form})
+    #return render(request, "login/login.html", {"form":form})
+    return render(request, "index.html", {"form":form})
 
 def logout_view(request):
     #if not request.user.is_authenticated:

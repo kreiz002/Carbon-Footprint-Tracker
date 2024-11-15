@@ -1,13 +1,16 @@
 // src/components/LoginPage.js
 
 import React, { useState } from 'react';
+import axios from 'axios';
 import './LoginPage.css';
+import { useNavigate } from 'react-router-dom';
 
 function LoginPage() {
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({
@@ -19,6 +22,17 @@ function LoginPage() {
   const handleSubmit = (e) => {
     e.preventDefault();
     // Logic for when user hits log in (backend)
+    axios.post('http://127.0.0.1:8000/login/', {
+      email: formData.email,
+      password : formData.password,
+    })
+    .then((response) => {
+      console.log(response);
+      navigate('/');
+    })
+    .catch(error => {
+      console.log(error)
+    });
     console.log('Form submitted:', formData);
   };
 
