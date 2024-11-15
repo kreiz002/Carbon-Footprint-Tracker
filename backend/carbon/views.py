@@ -29,23 +29,17 @@ def register_view(request):
     #username = data.get("username")
     #password = data.get("password")
     if request.method == "POST":
-        form = RegisterForm(request.POST)
-        if form.is_valid():
-            data = json.loads(request.body)
-            name = data.get("name")
-            email = data.get("email")
-            password = data.get("password")
+        data = json.loads(request.body)
+        name = data.get("name")
+        email = data.get("email")
+        password = data.get("password")
 
-            collection.insert_one({
-            "email":email,
-            "password":password,
-            })
+        collection.insert_one({
+        "email":email,
+        "password":password,
+        })
 
-            return JsonResponse({"details":"Successfully registered"})
-        else:
-            return JsonResponse({"detail":"Invalid credentials"}, status=400)
-    else: 
-        form = RegisterForm()
+        return JsonResponse({"details":"Successfully registered"})
     
     return render(request, "index.html")
 
@@ -81,8 +75,6 @@ def login_view(request):
         #return redirect('/')
         return JsonResponse({"details":"Successfully logged in"})
         #return redirect("/")
-    else:
-        form = LoginForm()
         #return JsonResponse({"details":"not a POST"})
     #return JsonResponse({"details":"Successfully logged in"})
 
