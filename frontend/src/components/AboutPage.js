@@ -27,13 +27,10 @@ function AboutPage() {
           <li>Receive personalized recommendations to reduce emissions</li>
         </ul>
 
-        <h2>Our Team</h2>
-        <p>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec lorem erat, 
-        scelerisque et tincidunt ut, interdum non lacus. Nulla gravida, nunc in sodales ullamcorper, 
-        nisl ipsum finibus tortor, laoreet venenatis ligula orci tristique ipsum. 
-        </p>
-
+        <h2>Join Us in Making a Difference</h2>
+        <p>Ready to track and reduce your carbon footprint? Sign up now by clicking the link below.</p>
+        <a href="/signup" className="cta-button">Get Started</a>
+        
         <img src={CarbonFootprintImage} alt="Carbon Footprint" className="carbon-footprint-image" />
       </section>
 
