@@ -45,3 +45,22 @@
     display: block;
   }
   
+  .cta-section {
+    text-align: center;
+    margin-top: 2rem;
+  }
+  
+  .cta-button {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    background-color: #28a745;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+  }
+  
+  .cta-button:hover {
+    background-color: #218838;
+  }
+  

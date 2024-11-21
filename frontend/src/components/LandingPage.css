@@ -43,17 +43,24 @@
   }
   
   .hero-section button {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
     background-color: #4CAF50;
     color: white;
-    border: none;
-    padding: 1rem 2rem;
+    text-decoration: none;
+    font-weight: bold;
     font-size: 1rem;
+    border-radius: 5px;
+    border: none;
     cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
   }
-  
+
   .hero-section button:hover {
     background-color: #45a049;
+    transform: scale(1.05); /* Adds a slight zoom effect */
   }
+
   
   .features-section {
     padding: 3rem;

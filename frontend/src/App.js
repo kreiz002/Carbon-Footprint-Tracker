@@ -7,7 +7,7 @@ import LandingPage from './components/LandingPage';
 import AboutPage from './components/AboutPage'; 
 import SignUpPage from './components/SignUpPage'; 
 import LoginPage from './components/LoginPage';
-// import DashboardPage from './components/DashboardPage';  // This is for the Dashboard page
+import DashboardPage from './components/DashboardPage';
 
 
 function App() {
@@ -27,9 +27,8 @@ function App() {
           {/* Route for the Log In Page */}
           <Route path="/login" element={<LoginPage />} />
 
-          {/* This needs to be worked on next - Dashbaord Page */}
           {/* Route for the Dashboard Page */}
-          {/* <Route path="/dashboard" element={<Dashboard />} /> */}
+          <Route path="/dashboard" element={<DashboardPage />} />
 
         </Routes>
       </div>
