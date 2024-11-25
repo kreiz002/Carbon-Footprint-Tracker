@@ -11,6 +11,8 @@ class MongoDBBackend(BaseBackend):
         collection = db['users']
 
         user = collection.find_one({"email":email})
+        if (user == None):
+            return None
         user = User(email=email, password=password)
         #user['backend'] = 'carbon.mongodb_backend.MongoDBBackend'
         if user and user.password == password:

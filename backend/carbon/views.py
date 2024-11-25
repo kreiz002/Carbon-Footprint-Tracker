@@ -21,20 +21,23 @@ import pymongo
 
 #collection = db['users']
 
+@csrf_exempt
 def register_view(request):
     client = pymongo.MongoClient('mongodb+srv://pesco014:dUckyt1me@carboncluster.uf3bc.mongodb.net/?retryWrites=true&w=majority&appName=CarbonCluster')
     db = client['carbon']
     collection = db['users']
-    #data = json.loads(request.body)
-    #username = data.get("username")
-    #password = data.get("password")
     if request.method == "POST":
         data = json.loads(request.body)
         name = data.get("name")
         email = data.get("email")
         password = data.get("password")
 
+        user = authenticate(request, email=email, password=password)
+        if (user != None):
+            return JsonResponse({"details":"User already exists"})
+
         collection.insert_one({
+        "name":name,
         "email":email,
         "password":password,
         })
@@ -43,24 +46,12 @@ def register_view(request):
     
     return render(request, "index.html")
 
-
-    #if username is None  or password is None:
-    #    return JsonResponse({"detail":"Please provide username and password"})
-    
-    #return JsonResponse({"detail":"User created"})
-
 #@require_POST
 @csrf_exempt
 def login_view(request):
-    #data = json.loads(request.body)
-    #username = data.get("username")
-    #password = data.get("password")
-
+    if ('user' in request.session):
+            return JsonResponse({"details":"User already logged in"})
     if request.method == "POST":
-        #form = LoginForm(data=request.POST)
-
-        #email = form.data["username"]
-        #password = form.data["password"]
         data = json.loads(request.body)
 
         email = data.get('email')
@@ -72,13 +63,8 @@ def login_view(request):
             return JsonResponse({"detail":"Invalid credentials"},
                                 status=400)
         request.session['user'] = email
-        #return redirect('/')
         return JsonResponse({"details":"Successfully logged in"})
-        #return redirect("/")
-        #return JsonResponse({"details":"not a POST"})
-    #return JsonResponse({"details":"Successfully logged in"})
 
-    #return render(request, "login/login.html", {"form":form})
     return render(request, "index.html")
 
 def logout_view(request):
@@ -86,7 +72,10 @@ def logout_view(request):
     if 'user' in request.session:
         #Session.objects.filter(session_key=request.session.session_key).delete()
         del request.session['user']
-    return redirect('/home/')
+        return JsonResponse({"details":"Successfully logged out"})
+    else:
+        return JsonResponse({"details":"No user logged in"})
+    #return redirect('/home/')
 
 def home_view(request):
     if 'user' in request.session:
