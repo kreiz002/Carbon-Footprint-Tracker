@@ -107,6 +107,10 @@
             <li>Parker Esco</li>  
           </ul>
 
+          <h2>Join Us in Making a Difference</h2>
+          <p>Ready to track and reduce your carbon footprint? Sign up now by clicking the link below.</p>
+          <a href="/signup" className="cta-button">Get Started</a>
+
           <img
             src={CarbonFootprintImage}
             alt="Carbon Footprint"
