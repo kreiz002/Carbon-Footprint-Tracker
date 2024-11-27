@@ -88,16 +88,17 @@ class Vehicle(Producer):
         self.maintenance = maintenance
 
     def emmissions(self):
-        miles_per_year = self.miles_per_week*52
-        emmissions = miles_per_year * (1/self.avg_fuel_efficiency) * EF_passenger_vehicle * nonCO2_vehicle_emissions_ratio #19.6, 1.01
+        # miles_per_year = self.miles_per_week*52
+        # emmissions = miles_per_year * (1/self.avg_fuel_efficiency) * EF_passenger_vehicle * nonCO2_vehicle_emissions_ratio #19.6, 1.01
+        emmissions = self.miles_per_week * (1/self.avg_fuel_efficiency) * EF_passenger_vehicle * nonCO2_vehicle_emissions_ratio #19.6, 1.01
         efficiency = emmissions * vehicle_efficiency_improvements
         emmissions += efficiency
-        return round(emmissions)
+        return round(emmissions) #in lbs of carbon dioxide/year
 
     def emmissions_maintenance(self):
-        miles_per_year = self.miles_per_week*52
-        emmissions = (miles_per_year/self.avg_fuel_efficiency) * EF_passenger_vehicle * nonCO2_vehicle_emissions_ratio #19.6, 1.01
-
+        # miles_per_year = self.miles_per_week*52
+        # emmissions = (miles_per_year/self.avg_fuel_efficiency) * EF_passenger_vehicle * nonCO2_vehicle_emissions_ratio #19.6, 1.01
+        emmissions = (self.miles_per_week/self.avg_fuel_efficiency) * EF_passenger_vehicle * nonCO2_vehicle_emissions_ratio #19.6, 1.01
         return round(emmissions)
     
 class HomeEnergy(Producer):
@@ -143,45 +144,67 @@ class HomeEnergy(Producer):
             emissions = EF_propane * input * 12
         return emissions
 
+    def thermostat_savings(self, heatsrc_emissions, electricity_consumption, heat_src, degree_difference, heat):
+        if heat == True:
+            if heat_src==1:
+                emissions = heatsrc_emissions*heating_percent_NG*thermostat_heating_savings*degree_difference
+            elif heat_src==2:
+                emissions = heatsrc_emissions*heating_percent_electricity*thermostat_heating_savings*degree_difference
+            elif heat_src==3:
+                emissions = heatsrc_emissions*heating_percent_fuel_oil*thermostat_heating_savings*degree_difference
+            elif heat_src==4:
+                emissions = heatsrc_emissions*heating_percent_propane*thermostat_heating_savings*degree_difference
+            else:
+                emissions = 0
+        else:
+            emissions = electricity_consumption*AC_electricity_percent*thermostat_cooling_savings*degree_difference
+        return round(emissions)
+
+    def laundry_loaded_cold(self, laundry_count, e_factor_value):
+        emissions = kWh_per_load_laundry*e_factor_value*laundry_count #per week
+        return round(emissions)
+    
+    def dryer_savings(self, e_factor_value):
+        emissions = ((dryer_energy/2)*e_factor_value)/52
+        return round(emissions)
+
 class Waste(Producer):
     def __init__(self, habitants, zip, heat_src):
         Producer.__init__(self, habitants, zip, heat_src)
 
     def total_waste(self):
-        emissions = self.habitants * average_waste_emissions
-        return emissions
+        # emissions = self.habitants * average_waste_emissions 
+        emissions = (self.habitants * average_waste_emissions)/52 #per week
+        return round(emissions)
 
     def total_waste_after_recycling(self, cans, plastic, glass, newspaper, magazines):      
         if cans==True:
-            cans_waste = self.habitants * metal_recycling_avoided_emissions
+            cans_waste = self.habitants * (metal_recycling_avoided_emissions/52)
         else:
             cans_waste = 0
 
         if plastic==True:
-            plastic_waste = self.habitants * plastic_recycling_avoided_emissions
+            plastic_waste = self.habitants * (plastic_recycling_avoided_emissions/52)
         else:
             plastic_waste = 0  
 
         if glass==True:
-            glass_waste = self.habitants * glass_recycling_avoided_emissions
+            glass_waste = self.habitants * (glass_recycling_avoided_emissions/52)
         else:
             glass_waste = 0 
 
         if newspaper==True:
-            newspaper_waste = self.habitants * newspaper_recycling_avoided_emissions
+            newspaper_waste = self.habitants * (newspaper_recycling_avoided_emissions/52)
         else:
             newspaper_waste = 0  
 
         if magazines==True:
-            magazines_waste = self.habitants * mag_recycling_avoided_emissions
+            magazines_waste = self.habitants * (mag_recycling_avoided_emissions/52)
         else:
             magazines_waste = 0
         
         emissions = self.total_waste() + cans_waste + plastic_waste + glass_waste + newspaper_waste + magazines_waste
-        return emissions
-        
-    
-
+        return round(emissions)    
 
 
 
@@ -202,7 +225,11 @@ w1 = Waste(1, 33178, 1)
 # print(v1.emmissions_maintenance())
 
 # print(h1.egrid_lookup())
-# print(h1.electricity_consumption(2, 44, h1.egrid_lookup()))
+# h1_electric = h1.electricity_consumption(1, 44, h1.egrid_lookup())
+# print(h1_electric)
+# print(h1.thermostat_savings(h1_electric, h1_electric, 2, 10, True))
+# print(h1.laundry_loaded_cold(2, h1.egrid_lookup()))
+# print(h1.dryer_savings(h1.egrid_lookup()))
 
 print(w1.total_waste())
 print(w1.total_waste_after_recycling(True, False, False, False, False))
