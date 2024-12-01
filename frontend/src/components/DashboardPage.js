@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Pie, Line } from 'react-chartjs-2';
 import './DashboardPage.css';
 import {
@@ -10,7 +10,7 @@ import {
   LineElement,
   Tooltip,
   Legend,
-  Title
+  Title,
 } from 'chart.js';
 
 // Register necessary Chart.js elements and scales
@@ -30,39 +30,46 @@ function DashboardPage() {
     "Reduce, reuse, and recycle to cut down on waste.",
     "Use public transportation, bike, or walk instead of driving.",
     "Switch to renewable energy sources like solar or wind.",
-    "Conserve energy by turning off lights when not in use."
+    "Conserve energy by turning off lights when not in use.",
   ];
 
   const [currentFact, setCurrentFact] = useState(0);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     date: '',
-    task: 'transportation',
-    timeRequired: '',
+    miles: '',
+    laundry: '',
+    dryingRack: '',
+    recycled: '',
+    thermostat: '', // New field
+    heaterUsage: '', // New field
   });
+  const [theme, setTheme] = useState('light'); // Light theme by default
 
-  const nextFact = () => {
-    setCurrentFact((prev) => (prev + 1) % (facts.length + 1));
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    setTheme(savedTheme);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
   };
 
-  const prevFact = () => {
-    setCurrentFact((prev) => (prev - 1 + (facts.length + 1)) % (facts.length + 1));
-  };
+  const nextFact = () => setCurrentFact((prev) => (prev + 1) % facts.length);
+  const prevFact = () => setCurrentFact((prev) => (prev - 1 + facts.length) % facts.length);
 
-  const openForm = () => {
-    setShowForm(true);
-  };
-
+  const openForm = () => setShowForm(true);
   const closeForm = () => {
     setShowForm(false);
-    resetForm(); // Reset form when closed
+    resetForm();
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    if (name === "timeRequired" && !/^\d*\.?\d*$/.test(value)) {
-      return; // Only allow numbers and decimals in "Time Required"
-    }
     setFormData({
       ...formData,
       [name]: value,
@@ -72,14 +79,39 @@ function DashboardPage() {
   const resetForm = () => {
     setFormData({
       date: '',
-      task: 'transportation',
-      timeRequired: '',
+      miles: '',
+      laundry: '',
+      dryingRack: '',
+      recycled: '',
+      thermostat: '', // Reset thermostat
+      heaterUsage: '', // Reset heater usage
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form Submitted:", formData);
+
+    try {
+      const response = await fetch('http://127.0.0.1:8000/api/submit-data/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        const responseData = await response.json();
+        console.log('Data submitted successfully:', responseData);
+        alert('Form submitted successfully!');
+      } else {
+        console.error('Failed to submit data:', response.status, response.statusText);
+        alert('Failed to submit form. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error while submitting form:', error);
+      alert('An error occurred while submitting the form. Please try again later.');
+    }
   };
 
   const pieData = {
@@ -105,9 +137,13 @@ function DashboardPage() {
   };
 
   return (
-    <div className="dashboard-container">
+    <div className={`dashboard-container ${theme}`}>
       <div className="header">
-        Carbon Footprint Tracker
+        <span>Carbon Footprint Tracker</span>
+        <label className="theme-toggle">
+          <input type="checkbox" onChange={toggleTheme} checked={theme === 'dark'} />
+          <span className="slider"></span>
+        </label>
       </div>
       <div className="content-container">
         <div className="sidebar">
@@ -118,11 +154,7 @@ function DashboardPage() {
             &#9664;
           </button>
           <div className="carousel-content" key={currentFact}>
-            {currentFact === 0 ? (
-              <h2>Tip to Reduce Carbon Footprint</h2>
-            ) : (
-              <p>{facts[currentFact - 1]}</p>
-            )}
+            <p>{facts[currentFact]}</p>
           </div>
           <button className="carousel-button right" onClick={nextFact}>
             &#9654;
@@ -131,7 +163,9 @@ function DashboardPage() {
       </div>
       <div className="button-container">
         <button className="action-button">Show Recommendations</button>
-        <button className="action-button" onClick={openForm}>Make Daily Entry</button>
+        <button className="action-button" onClick={openForm}>
+          Make Daily Entry
+        </button>
         <button className="action-button">Sign Out</button>
       </div>
       <div className="chart-container">
@@ -140,18 +174,19 @@ function DashboardPage() {
           <Pie data={pieData} />
         </div>
         <div className="small-chart">
-          <h3>Daily Emissions</h3>
+          <h3>Last Recorded Emissions</h3>
           <Line data={lineData} />
         </div>
       </div>
-
       {showForm && (
         <div className="popup-overlay">
           <form className="popup-form" onSubmit={handleSubmit}>
-            <button type="button" className="close-button" onClick={closeForm}>X</button>
+            <button type="button" className="close-button" onClick={closeForm}>
+              X
+            </button>
             <h2>Daily Entry Form</h2>
             <label>
-              Date:
+              <span>Date:</span>
               <input
                 type="date"
                 name="date"
@@ -161,30 +196,69 @@ function DashboardPage() {
               />
             </label>
             <label>
-              Daily Task:
-              <select
-                name="task"
-                value={formData.task}
-                onChange={handleInputChange}
-              >
-                <option value="transportation">Transportation</option>
-                <option value="homeEnergy">Home Energy</option>
-                <option value="waste">Waste</option>
-              </select>
-            </label>
-            <label>
-              Time Required (hours):
+              <span>Total Miles Driven:</span>
               <input
                 type="text"
-                name="timeRequired"
-                value={formData.timeRequired}
-                onChange={handleInputChange}
+                name="miles"
+                value={formData.miles}
+                onChange={(e) => {
+                  if (/^\d*$/.test(e.target.value)) {
+                    handleInputChange(e);
+                  }
+                }}
                 required
               />
             </label>
+            <label>
+              <span>Laundry Loaded with cold water:</span>
+              <select name="laundry" value={formData.laundry} onChange={handleInputChange}>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </select>
+            </label>
+            <label>
+              <span>Drying Rack Used Today:</span>
+              <select name="dryingRack" value={formData.dryingRack} onChange={handleInputChange}>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </select>
+            </label>
+            <label>
+              <span>Recycled Any Trash:</span>
+              <select name="recycled" value={formData.recycled} onChange={handleInputChange}>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </select>
+            </label>
+            <label>
+              <span>Thermostat (in °F):</span>
+              <input
+                type="text"
+                name="thermostat"
+                value={formData.thermostat}
+                onChange={(e) => {
+                  if (/^\d*$/.test(e.target.value)) {
+                    handleInputChange(e);
+                  }
+                }}
+                required
+              />
+            </label>
+            <label>
+              <span>Heater Usage:</span>
+              <select name="heaterUsage" value={formData.heaterUsage} onChange={handleInputChange}>
+                <option value="">Select</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </select>
+            </label>
             <div className="form-buttons">
-              <button type="submit" className="submit-button">Submit</button>
-              <button type="button" className="reset-button" onClick={resetForm}>Reset</button>
+              <button type="submit" className="submit-button">
+                Submit
+              </button>
+              <button type="button" className="reset-button" onClick={resetForm}>
+                Reset
+              </button>
             </div>
           </form>
         </div>

@@ -1,20 +1,94 @@
-/* Full container styling */
+/* General container styling */
 .dashboard-container {
     width: 100%;
     font-family: Arial, sans-serif;
     display: flex;
     flex-direction: column;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+/* Light theme */
+.dashboard-container.light {
+    background-color: #ffffff;
+    color: #333;
+}
+
+/* Dark theme */
+.dashboard-container.dark {
+    background-color: #1e1e2f;
+    color: #ffffff;
 }
 
 /* Header styling */
 .header {
-    width: 100%;
-    padding: 30px;
-    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
     font-size: 2em;
     font-weight: bold;
-    color: white;
+    text-align: center;
     background-color: #28a745;
+    color: white;
+    position: relative; /* Ensures toggle button is positioned correctly */
+    transition: background-color 0.3s;
+}
+
+/* Theme toggle container */
+.theme-toggle {
+    position: absolute;
+    right: 20px; /* Aligns toggle to the right */
+    top: 50%;
+    transform: translateY(-50%);
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+/* Toggle input (hidden) */
+.theme-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+/* Toggle slider */
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: '';
+    height: 18px;
+    width: 18px;
+    left: 4px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 50%;
+}
+
+/* When the toggle is active (dark mode) */
+input:checked + .slider {
+    background-color: #2196f3;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+/* Dark header background */
+.dashboard-container.dark .header {
+    background-color: #2c2c3e;
 }
 
 /* Main content container */
@@ -32,6 +106,12 @@
     font-size: 1.5em;
     color: #333;
     text-align: center;
+    transition: background-color 0.3s;
+}
+
+.dashboard-container.dark .sidebar {
+    background-color: #2c2c3e;
+    color: #ffffff;
 }
 
 /* Carousel container styling */
@@ -46,24 +126,28 @@
     border-radius: 8px;
     overflow: hidden;
     height: 150px;
+    transition: background-color 0.3s;
+}
+
+.dashboard-container.dark .carousel-container {
+    background-color: #333946;
 }
 
 /* Carousel content styling */
 .carousel-content {
     text-align: center;
     width: 100%;
-    transition: transform 0.5s ease-in-out;
-    animation: slideIn 0.5s forwards;
+    animation: fade-in 1s ease-in-out;
 }
 
-@keyframes slideIn {
+@keyframes fade-in {
     from {
-        transform: translateX(20%);
         opacity: 0;
+        transform: scale(0.9);
     }
     to {
-        transform: translateX(0);
         opacity: 1;
+        transform: scale(1);
     }
 }
 
@@ -85,6 +169,10 @@
 
 .carousel-button.right {
     right: 10px;
+}
+
+.dashboard-container.dark .carousel-button {
+    color: #ffffff;
 }
 
 /* Button container styling */
@@ -111,6 +199,15 @@
     background-color: #5a6268;
 }
 
+.dashboard-container.dark .action-button {
+    background-color: #444455;
+    color: #dddddd;
+}
+
+.dashboard-container.dark .action-button:hover {
+    background-color: #555566;
+}
+
 /* Chart container styling */
 .chart-container {
     display: flex;
@@ -133,6 +230,11 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    transition: background-color 0.3s;
+}
+
+.dashboard-container.dark .small-chart {
+    background-color: #2c2c3e;
 }
 
 /* Popup overlay */
@@ -155,8 +257,14 @@
     background: #ffffff;
     padding: 20px;
     border-radius: 8px;
-    width: 300px;
+    width: 400px;
     text-align: center;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.dashboard-container.dark .popup-form {
+    background-color: #333946;
+    color: #ffffff;
 }
 
 .popup-form h2 {
@@ -164,20 +272,31 @@
     font-size: 1.5em;
 }
 
+/* Label styling */
 .popup-form label {
-    display: block;
-    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.popup-form label span {
+    width: 50%;
     text-align: left;
 }
 
 .popup-form input,
 .popup-form select {
-    width: 100%;
+    width: 45%;
     padding: 8px;
-    margin-top: 5px;
-    margin-bottom: 15px;
     border-radius: 4px;
     border: 1px solid #ccc;
+    transition: border-color 0.3s;
+}
+
+.popup-form input:focus,
+.popup-form select:focus {
+    border-color: #28a745;
 }
 
 /* Close button styling */
@@ -192,6 +311,10 @@
     cursor: pointer;
 }
 
+.dashboard-container.dark .close-button {
+    color: #ffffff;
+}
+
 /* Submit and Reset button styling */
 .form-buttons {
     display: flex;
@@ -199,14 +322,18 @@
     margin-top: 10px;
 }
 
-.submit-button, .reset-button {
+.submit-button,
+.reset-button {
     padding: 8px 16px;
     font-size: 1em;
     color: white;
-    background-color: #28a745;
     border: none;
     border-radius: 5px;
     cursor: pointer;
+}
+
+.submit-button {
+    background-color: #28a745;
 }
 
 .reset-button {
@@ -219,4 +346,12 @@
 
 .reset-button:hover {
     background-color: #c82333;
+}
+
+.dashboard-container.dark .submit-button {
+    background-color: #1b9b3e;
+}
+
+.dashboard-container.dark .reset-button {
+    background-color: #a8283d;
 }
