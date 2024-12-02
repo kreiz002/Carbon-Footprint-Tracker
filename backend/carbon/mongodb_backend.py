@@ -5,13 +5,15 @@ from django.contrib.auth.models import User
 import pymongo
 
 class MongoDBBackend(BaseBackend):
-    def authenticate(self, request, username=None, password=None):
+    def authenticate(self, request, email=None, password=None):
         client = pymongo.MongoClient('mongodb+srv://pesco014:dUckyt1me@carboncluster.uf3bc.mongodb.net/?retryWrites=true&w=majority&appName=CarbonCluster')
         db = client['carbon']
         collection = db['users']
 
-        user = collection.find_one({"username":username})
-        user = User(username=username, password=password)
+        user = collection.find_one({"email":email})
+        if (user == None):
+            return None
+        user = User(email=email, password=password)
         #user['backend'] = 'carbon.mongodb_backend.MongoDBBackend'
         if user and user.password == password:
             return user

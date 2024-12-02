@@ -8,4 +8,5 @@ urlpatterns = [
     path("whoami/", views.whoami_view, name="carbon_whoami"),
     path("register/", views.register_view, name="carbin_register"),
     path("home/", views.home_view, name='carbon_home'),
+    path("", views.front, name="carbon_front"),
 ]
