@@ -1,47 +1,162 @@
-/* src/components/AboutPage.css */
-
 .about-page {
-    font-family: Arial, sans-serif;
-    padding: 2rem;
-    text-align: center;
-  }
-  
-  .about-header h1 {
-    font-size: 2.5rem;
-    margin-bottom: 1rem;
-    color: #4CAF50;
-  }
-  
-  .about-content {
-    margin: 0 auto;
-    max-width: 800px;
-    text-align: left;
-  }
-  
-  .about-content h2 {
-    color: #333;
-    margin-top: 2rem;
-  }
-  
-  .about-content p {
-    font-size: 1.1rem;
-    line-height: 1.6;
-  }
-  
-  .about-content ul {
-    list-style-type: disc;
-    margin-left: 2rem;
-  }
-  
-  .about-content li {
-    margin: 0.5rem 0;
-  }
-  
+  font-family: Arial, sans-serif;
+  padding: 2rem;
+  text-align: center;
+  background-color: #f9f9f9; /* Subtle background color for better readability */
+}
+
+.about-header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: #4CAF50;
+  font-weight: bold;
+}
+
+.about-content {
+  margin: 0 auto;
+  max-width: 800px;
+  text-align: left;
+  background: #ffffff; /* White background for content section */
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+}
+
+.about-content h2 {
+  color: #333;
+  margin-top: 2rem;
+  font-size: 1.8rem;
+  border-bottom: 2px solid #4CAF50; /* Add a green underline for section titles */
+  padding-bottom: 0.5rem;
+}
+
+.about-content p {
+  font-size: 1.1rem;
+  line-height: 1.8; /* Increase line height for better readability */
+  color: #555; /* Slightly lighter color for paragraph text */
+}
+
+.about-content ul {
+  list-style-type: disc;
+  margin-left: 2rem;
+  margin-top: 1rem;
+  padding-left: 1.5rem;
+}
+
+.about-content li {
+  margin: 0.5rem 0;
+  font-size: 1rem;
+}
 
 .carbon-footprint-image {
-    width: 100%;
-    max-width: 1000px; 
-    margin: 2rem auto 0;
-    display: block;
-  }
-  
+  width: 100%;
+  max-width: 800px; /* Adjusted max width for better image scaling */
+  margin: 2rem auto 0;
+  display: block;
+  border-radius: 8px; /* Rounded corners for a modern look */
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Add a slight shadow to the image */
+}
+
+
+footer {
+  margin-top: 3rem;
+  padding: 1.5rem 2rem; /* Increased padding for breathing space */
+  background-color: #333;
+  color: #fff;
+  font-size: 0.9rem;
+  text-align: center;
+  border-top: 3px solid #4CAF50;
+  position: relative; /* Ensure footer is properly positioned */
+  left: 0;
+  width: 100%; /* Ensure the footer spans the full width of the page */
+  box-sizing: border-box; /* Ensure padding doesn't affect the footer's width */
+}
+
+footer a {
+  color: #4CAF50;
+  text-decoration: none;
+  margin: 0 0.5rem;
+  font-weight: bold;
+}
+
+footer a:hover {
+  text-decoration: underline;
+}
+
+footer p {
+  margin-bottom: 0.5rem; /* Space between text and links */
+}
+
+.trivia-section {
+  margin-top: 2rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  padding: 1rem;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.trivia-item {
+  margin-bottom: 1rem;
+}
+
+.trivia-question {
+  background-color: #4CAF50;
+  color: #fff;
+  padding: 0.8rem;
+  width: 100%;
+  text-align: left;
+  border: none;
+  border-radius: 4px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.trivia-question:hover {
+  background-color: #45a049;
+}
+
+.arrow {
+  font-size: 1.2rem;
+}
+
+.trivia-answer {
+  padding: 0 0.8rem; /* Padding for answer content */
+  background-color: #ffffff;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.trivia-answer p {
+  margin: 0;
+  font-size: 1rem;
+  color: #555;
+}
+
+.trivia-answer {
+  overflow: hidden; /* Ensure content stays hidden when collapsed */
+  transition: height 0.3s ease; /* Smooth dropdown animation */
+}
+
+.cta-button {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background-color: #4CAF50;
+  color: white;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 1rem;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.cta-button:hover{
+  background-color: #45a049;
+  transform: scale(1.05); /* Adds a slight zoom effect */
+}
