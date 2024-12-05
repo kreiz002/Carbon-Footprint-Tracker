@@ -80,7 +80,7 @@ function App() {
 
           {/* Route for the Dashboard Page */}
           
-          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/dashboard" element={<DashboardPage handleLogout={handleLogout} />} />
         </Routes>
       </div>
     </Router>
