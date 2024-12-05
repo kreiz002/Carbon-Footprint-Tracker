@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Pie, Line } from 'react-chartjs-2';
 import './DashboardPage.css';
+import axios from 'axios';
 import {
   Chart as ChartJS,
   ArcElement,
@@ -25,7 +26,7 @@ ChartJS.register(
   Title
 );
 
-function DashboardPage() {
+function DashboardPage({handleLogout}) {
   const facts = [
     "Reduce, reuse, and recycle to cut down on waste.",
     "Use public transportation, bike, or walk instead of driving.",
@@ -166,7 +167,7 @@ function DashboardPage() {
         <button className="action-button" onClick={openForm}>
           Make Daily Entry
         </button>
-        <button className="action-button">Sign Out</button>
+        <button onClick={handleLogout} className="action-button">Sign Out</button>
       </div>
       <div className="chart-container">
         <div className="small-chart">
