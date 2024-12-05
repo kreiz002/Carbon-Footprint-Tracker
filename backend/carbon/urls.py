@@ -9,4 +9,5 @@ urlpatterns = [
     path("register/", views.register_view, name="carbin_register"),
     path("home/", views.home_view, name='carbon_home'),
     path("", views.front, name="carbon_front"),
+    path("api/submit-data/", views.dashboard_view, name="carbon_footprint"),
 ]
