@@ -77,6 +77,21 @@ def logout_view(request):
         return JsonResponse({"details":"No user logged in"})
     #return redirect('/home/')
 
+def dashboard_view(request):
+    client = pymongo.MongoClient('mongodb+srv://pesco014:dUckyt1me@carboncluster.uf3bc.mongodb.net/?retryWrites=true&w=majority&appName=CarbonCluster')
+    db = client['carbon']
+    collection = db['footprint']
+    if request.method == "POST":
+        data = json.loads(request.body)
+        #TODO: Parse Data and insert
+
+        collection.insert_one({
+
+        })
+
+        return JsonResponse({"details":"Successfully registered"})
+    
+
 def home_view(request):
     if 'user' in request.session:
         current_user = request.session['user']
