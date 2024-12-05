@@ -79,9 +79,8 @@ function App() {
           <Route path="/login" element={<LoginPage handleLogin={handleLogin}/>} />
 
           {/* Route for the Dashboard Page */}
-          <Route element={<AuthWrapper/>}>
-            <Route path="/dashboard" element={<DashboardPage />} />
-          </Route>
+          
+          <Route path="/dashboard" element={<DashboardPage />} />
         </Routes>
       </div>
     </Router>
