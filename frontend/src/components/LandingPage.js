@@ -8,10 +8,10 @@ import Footer from './Footer';
 import Navbar from './Navbar'; 
 import { Link } from 'react-router-dom';
 
-function LandingPage() {
+function LandingPage({handleLogout}) {
   return (
     <div className="landing-page">
-      <Navbar /> 
+      <Navbar handleLogout={handleLogout}/> 
       
       <section className="hero-section">
         <h2>Track Your Carbon Footprint</h2>

@@ -5,7 +5,7 @@ import axios from 'axios';
 import './LoginPage.css';
 import { useNavigate } from 'react-router-dom';
 
-function LoginPage() {
+function LoginPage({handleLogin}) {
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -28,6 +28,7 @@ function LoginPage() {
     })
     .then((response) => {
       console.log(response);
+      handleLogin();
       navigate('/');
     })
     .catch(error => {
