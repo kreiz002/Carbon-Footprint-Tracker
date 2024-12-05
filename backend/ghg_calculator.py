@@ -144,7 +144,7 @@ class HomeEnergy(Producer):
             emissions = EF_propane * input * 12
         return emissions
 
-    def thermostat_savings(self, heatsrc_emissions, electricity_consumption, heat_src, degree_difference, heat):
+    def thermostat_savings(self, heatsrc_emissions, electricity_consumption, heat_src, degree_difference, heat): #degree
         if heat == True:
             if heat_src==1:
                 emissions = heatsrc_emissions*heating_percent_NG*thermostat_heating_savings*degree_difference

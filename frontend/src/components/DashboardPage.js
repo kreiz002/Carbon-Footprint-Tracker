@@ -35,6 +35,12 @@ function DashboardPage({handleLogout}) {
   ];
 
   const [currentFact, setCurrentFact] = useState(0);
+  const [showBasicForm, setShowBasicForm] = useState(false);
+  const [formBasicData, setFormBasicData] = useState({
+    occupants: '',
+    zipCode: '',
+    primaryHeatingSource: '',
+  });
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     date: '',
@@ -62,6 +68,54 @@ function DashboardPage({handleLogout}) {
 
   const nextFact = () => setCurrentFact((prev) => (prev + 1) % facts.length);
   const prevFact = () => setCurrentFact((prev) => (prev - 1 + facts.length) % facts.length);
+  
+  const openBasicForm = () => setShowBasicForm(true);
+  const closeBasicForm = () => {
+    setShowBasicForm(false);
+    resetBasicForm();
+  };
+
+  const handleBasicInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormBasicData({
+      ...formBasicData,
+      [name]: value,
+    });
+  };
+
+  const resetBasicForm = () => {
+    setFormBasicData({
+      occupants: '',
+      zipCode: '',
+      primaryHeatingSource: '',
+    });
+  };
+
+  const handleBasicSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const response = await fetch('http://127.0.0.1:8000/api/submit-data/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formBasicData),
+      });
+
+      if (response.ok) {
+        const responseData = await response.json();
+        console.log('Data submitted successfully:', responseData);
+        alert('Form submitted successfully!');
+      } else {
+        console.error('Failed to submit data:', response.status, response.statusText);
+        alert('Failed to submit form. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error while submitting form:', error);
+      alert('An error occurred while submitting the form. Please try again later.');
+    }
+  };
 
   const openForm = () => setShowForm(true);
   const closeForm = () => {
@@ -163,6 +217,9 @@ function DashboardPage({handleLogout}) {
         </div>
       </div>
       <div className="button-container">
+        <button className="action-button" onClick={openBasicForm}>
+          Basic Information
+        </button>
         <button className="action-button">Show Recommendations</button>
         <button className="action-button" onClick={openForm}>
           Make Daily Entry
@@ -179,6 +236,66 @@ function DashboardPage({handleLogout}) {
           <Line data={lineData} />
         </div>
       </div>
+      {showBasicForm && (
+        <div className="popup-overlay">
+          <form className="popup-form" onSubmit={handleBasicSubmit}>
+            <button type="button" className="close-button" onClick={closeBasicForm}>
+              X
+            </button>
+            <h2>Basic Information Form</h2>
+            <label>
+              <span>How many people live in your home?:</span>
+              <input
+                type="text"
+                name="occupants"
+                value={formBasicData.occupants}
+                onChange={handleBasicInputChange}
+                required
+              />
+            </label>
+            <label>
+              <span>What is your zip code?:</span>
+              <input
+                type="text"
+                name="zipCode"
+                value={formBasicData.zipCode}
+                onChange={(e) => {
+                  if (/^\d*$/.test(e.target.value)) {
+                    handleBasicInputChange(e);
+                  }
+                }}
+                required
+              />
+            </label>
+            <label>
+              <span>
+                What is your household's primary heating source?:
+                <p><small>Enter <b>1</b> for natural gas, <b>2</b> for electric heat, <b>3</b> for oil, 
+                <b>4</b> for propane, <b>5</b> for wood, or <b>6</b> if you do not heat your house</small></p>
+              </span>
+              <input
+                type="text"
+                name="primaryHeatingSource"
+                value={formBasicData.primaryHeatingSource}
+                onChange={(e) => {
+                  if (/^\d*$/.test(e.target.value)) {
+                    handleBasicInputChange(e);
+                  }
+                }}
+                required
+              />
+            </label>
+            <div className="form-buttons">
+              <button type="submit" className="submit-button">
+                Submit
+              </button>
+              <button type="button" className="reset-button" onClick={resetBasicForm}>
+                Reset
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
       {showForm && (
         <div className="popup-overlay">
           <form className="popup-form" onSubmit={handleSubmit}>
