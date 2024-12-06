@@ -93,7 +93,7 @@ class Vehicle(Producer):
         emmissions = self.miles_per_week * (1/self.avg_fuel_efficiency) * EF_passenger_vehicle * nonCO2_vehicle_emissions_ratio #19.6, 1.01
         efficiency = emmissions * vehicle_efficiency_improvements
         emmissions += efficiency
-        return round(emmissions) #in lbs of carbon dioxide/year
+        return round(emmissions) #in lbs of carbon dioxide/week
 
     def emmissions_maintenance(self):
         # miles_per_year = self.miles_per_week*52

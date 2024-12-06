@@ -33,7 +33,7 @@ function DashboardPage({handleLogout}) {
     "Switch to renewable energy sources like solar or wind.",
     "Conserve energy by turning off lights when not in use.",
   ];
-
+  const [objectId, setObjectId] = useState(null); // Initialize objectId
   const [currentFact, setCurrentFact] = useState(0);
   const [showBasicForm, setShowBasicForm] = useState(false);
   const [formBasicData, setFormBasicData] = useState({
@@ -91,32 +91,6 @@ function DashboardPage({handleLogout}) {
     });
   };
 
-  const handleBasicSubmit = async (e) => {
-    e.preventDefault();
-
-    try {
-      const response = await fetch('http://127.0.0.1:8000/api/submit-data/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formBasicData),
-      });
-
-      if (response.ok) {
-        const responseData = await response.json();
-        console.log('Data submitted successfully:', responseData);
-        alert('Form submitted successfully!');
-      } else {
-        console.error('Failed to submit data:', response.status, response.statusText);
-        alert('Failed to submit form. Please try again.');
-      }
-    } catch (error) {
-      console.error('Error while submitting form:', error);
-      alert('An error occurred while submitting the form. Please try again later.');
-    }
-  };
-
   const openForm = () => setShowForm(true);
   const closeForm = () => {
     setShowForm(false);
@@ -143,31 +117,53 @@ function DashboardPage({handleLogout}) {
     });
   };
 
-  const handleSubmit = async (e) => {
+  const handleCombinedSubmit = async (e, formType) => {
     e.preventDefault();
 
-    try {
-      const response = await fetch('http://127.0.0.1:8000/api/submit-data/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+    const payload = { objectId }; // Include the current objectId if it exists
 
-      if (response.ok) {
-        const responseData = await response.json();
-        console.log('Data submitted successfully:', responseData);
-        alert('Form submitted successfully!');
-      } else {
-        console.error('Failed to submit data:', response.status, response.statusText);
-        alert('Failed to submit form. Please try again.');
-      }
-    } catch (error) {
-      console.error('Error while submitting form:', error);
-      alert('An error occurred while submitting the form. Please try again later.');
+    if (formType === 'basicInfo') {
+        payload.basicInfo = {
+            habitants: formBasicData.occupants,
+            zip: formBasicData.zipCode,
+            heat_src: formBasicData.primaryHeatingSource,
+        };
     }
-  };
+    if (formType === 'dailyEntry') {
+        payload.dailyEntry = {
+            date: formData.date,
+            miles: formData.miles,
+            laundry: formData.laundry,
+            dryingRack: formData.dryingRack,
+            recycled: formData.recycled,
+            thermostat: formData.thermostat,
+            heaterUsage: formData.heaterUsage,
+        };
+    }
+
+    try {
+        const response = await axios.post('http://127.0.0.1:8000/api/submit-data/', payload, {
+            withCredentials: true,
+        });
+
+        if (response.status === 200 || response.status === 201) {
+            // If the backend provides a new objectId, save it in the state
+            if (!objectId && response.data.objectId) {
+                setObjectId(response.data.objectId); // Save objectId for updates
+                console.log("New objectId set:", response.data.objectId); // Debugging
+            }
+
+            alert('Data submitted successfully');
+        } else {
+            alert('Submission failed');
+        }
+    } catch (error) {
+        alert('Error while submitting: ' + error.message);
+    }
+};
+
+
+  
 
   const pieData = {
     labels: ['Transportation', 'Home Energy', 'Waste'],
@@ -238,7 +234,7 @@ function DashboardPage({handleLogout}) {
       </div>
       {showBasicForm && (
         <div className="popup-overlay">
-          <form className="popup-form" onSubmit={handleBasicSubmit}>
+          <form className="popup-form" onSubmit={(e) => handleCombinedSubmit(e, 'basicInfo')}>
             <button type="button" className="close-button" onClick={closeBasicForm}>
               X
             </button>
@@ -298,7 +294,7 @@ function DashboardPage({handleLogout}) {
       )}
       {showForm && (
         <div className="popup-overlay">
-          <form className="popup-form" onSubmit={handleSubmit}>
+          <form className="popup-form" onSubmit={(e) => handleCombinedSubmit(e, 'dailyEntry')}>
             <button type="button" className="close-button" onClick={closeForm}>
               X
             </button>
