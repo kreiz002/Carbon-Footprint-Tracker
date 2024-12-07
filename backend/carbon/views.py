@@ -98,30 +98,39 @@ def dashboard_view(request):
             basic_info = data.get("basicInfo", {})
             daily_entry = data.get("dailyEntry", {})
 
-            # Prepare the document fields to be updated/inserted
-            update_fields = {}
-            if basic_info:
-                update_fields["basic_info"] = basic_info
-            if daily_entry:
-                update_fields["daily_entry"] = daily_entry
-
             if object_id:
-                # Update the existing document
+                # Handle updates to the existing document
+                update_operations = {}
+
+                if basic_info:
+                    # Update the basic_info section
+                    update_operations["$set"] = {"basic_info": basic_info}
+
+                if daily_entry:
+                    # Append the daily_entry to the array
+                    if "$push" not in update_operations:
+                        update_operations["$push"] = {}
+                    update_operations["$push"]["daily_entry"] = daily_entry
+
                 result = collection.update_one(
                     {"_id": ObjectId(object_id)},
-                    {"$set": update_fields},
-                    upsert=False  # Do not create a new document if it doesn't exist
+                    update_operations,
+                    upsert=False  # Ensure no new document is created if the ID doesn't exist
                 )
+
                 if result.matched_count == 0:
                     return JsonResponse({"error": "Document with the given ID not found"}, status=404)
+
                 return JsonResponse({"details": "Document updated successfully"}, status=200)
             else:
-                # Insert a new document
-                new_document = update_fields
+                # Insert a new document if no objectId is provided
+                new_document = {"basic_info": basic_info, "daily_entry": [daily_entry] if daily_entry else []}
                 insert_result = collection.insert_one(new_document)
                 return JsonResponse({"details": "Document created successfully", "objectId": str(insert_result.inserted_id)}, status=201)
+
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
+
 
 def home_view(request):
     if 'user' in request.session:

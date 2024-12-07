@@ -52,6 +52,8 @@ function DashboardPage({handleLogout}) {
     heaterUsage: '', // New field
   });
   const [theme, setTheme] = useState('light'); // Light theme by default
+  const [milesEntries, setMilesEntries] = useState([]); // Array to store all miles entries
+
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') || 'light';
@@ -117,6 +119,18 @@ function DashboardPage({handleLogout}) {
     });
   };
 
+  const [lineChartData, setLineChartData] = useState({
+    labels: [], // Start with an empty label array
+    datasets: [
+      {
+        label: 'Miles Driven',
+        data: [], // Start with empty data
+        borderColor: '#36A2EB',
+        fill: false,
+      },
+    ],
+  });
+  
   const handleCombinedSubmit = async (e, formType) => {
     e.preventDefault();
 
@@ -130,16 +144,59 @@ function DashboardPage({handleLogout}) {
         };
     }
     if (formType === 'dailyEntry') {
-        payload.dailyEntry = {
-            date: formData.date,
-            miles: formData.miles,
-            laundry: formData.laundry,
-            dryingRack: formData.dryingRack,
-            recycled: formData.recycled,
-            thermostat: formData.thermostat,
-            heaterUsage: formData.heaterUsage,
-        };
-    }
+      const { date, miles } = formData;
+      const transportation = calculateTransportationEmissions(formData.miles, 21.6); // Pass form values
+      const homeEnergy = calculateHomeEnergyEmissions(44, formBasicData.primaryHeatingSource); // Example or fetched values
+      const waste = calculateWasteEmissions(formBasicData.occupants, formData.recycled); // Example or fetched values
+      updatePieChart(transportation, homeEnergy, waste);
+
+      // Ensure `miles` is a number
+      const milesDriven = parseFloat(miles);
+      if (isNaN(milesDriven)) {
+          alert('Miles driven must be a valid number');
+          return;
+      }
+
+      //Add the new miles entry to the array
+      setMilesEntries((prevEntries) => [...prevEntries, {date, miles: milesDriven}]);
+  
+      payload.dailyEntry = { 
+        date: formData.date, 
+        miles: formData.miles, 
+        laundry: formData.laundry, 
+        dryingRack: formData.dryingRack, 
+        recycled: formData.recycled, 
+        thermostat: formData.thermostat, 
+        heaterUsage: formData.heaterUsage };
+  
+      // Update line chart data
+      setLineChartData((prevData) => {
+          const existingLabels = [...prevData.labels];
+          const existingData = [...prevData.datasets[0].data];
+  
+          // Check if the date already exists
+          const dateIndex = existingLabels.indexOf(date);
+          if (dateIndex !== -1) {
+              // Update existing entry
+              existingData[dateIndex] += milesDriven; // Aggregate miles if date exists
+          } else {
+              // Add new date and miles
+              existingLabels.push(date);
+              existingData.push(milesDriven);
+          }
+  
+          return {
+              ...prevData,
+              labels: existingLabels,
+              datasets: [
+                  {
+                      ...prevData.datasets[0],
+                      data: existingData,
+                  },
+              ],
+          };
+      });
+  }  
 
     try {
         const response = await axios.post('http://127.0.0.1:8000/api/submit-data/', payload, {
@@ -161,34 +218,75 @@ function DashboardPage({handleLogout}) {
         alert('Error while submitting: ' + error.message);
     }
 };
-
-
   
+const calculateTransportationEmissions = (avgFuelEfficiency) => {
+  const EF_passenger_vehicle = 19.6; // Emission factor (lbs CO2/mile)
+  const nonCO2_vehicle_emissions_ratio = 1.01; // Adjustment factor
+  const milesPerWeek = milesEntries.reduce((total, entry) => total + entry.miles, 0);
+  console.log("Miles Per Week:", milesPerWeek);
+  return (milesPerWeek / avgFuelEfficiency) * EF_passenger_vehicle * nonCO2_vehicle_emissions_ratio;
+};
 
-  const pieData = {
-    labels: ['Transportation', 'Home Energy', 'Waste'],
+const calculateHomeEnergyEmissions = (electricityUsage, heatingSource, otherFactors) => {
+  const EF_natural_gas = 119.58; // Example: Emission factor for natural gas
+  const EF_electricity = 14019.99772; // Example: Emission factor for electricity
+  // Logic depending on the heating source and other factors
+  return (electricityUsage/365) * (heatingSource === 1 ? EF_natural_gas : EF_electricity);
+};
+
+const calculateWasteEmissions = (habitants, recycling) => {
+  const averageWasteEmissions = 692; // lbs CO2/week per person
+  const recyclingReduction = recycling ? -89.38 : 0; // Adjust for recycling
+  return habitants * averageWasteEmissions + recyclingReduction;
+};
+
+const [pieChartData, setPieChartData] = useState({
+  labels: ['Transportation', 'Home Energy', 'Waste'],
+  datasets: [
+    {
+      data: [0, 0, 0], // Initial values
+      backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
+    },
+  ],
+});
+
+// Function to update pie chart data
+const updatePieChart = (transportation, homeEnergy, waste) => {
+  setPieChartData({
+    ...pieChartData,
     datasets: [
       {
-        data: [30, 50, 20],
-        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
+        ...pieChartData.datasets[0],
+        data: [transportation, homeEnergy, waste],
       },
     ],
-  };
+  });
+};
 
-  const lineData = {
-    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-    datasets: [
-      {
-        label: 'Daily Emissions',
-        data: [65, 59, 80, 81, 56, 55, 40],
-        borderColor: '#36A2EB',
-        fill: false,
-      },
-    ],
-  };
+// Call this function dynamically, e.g., on form submission
+const handleEmissionsCalculation = () => {
+  const transportation = calculateTransportationEmissions(21.6); // Example values
+  const homeEnergy = calculateHomeEnergyEmissions(44, formBasicData.heat_src); // Example values
+  const waste = calculateWasteEmissions(formBasicData.occupants, formData.recycled); // Example values
+
+  updatePieChart(transportation, homeEnergy, waste);
+};
 
   return (
+  
     <div className={`dashboard-container ${theme}`}>
+      <div>
+      <h3>All Miles Entries:</h3>
+      <ul>
+        {milesEntries.map((entry, index) => (
+          <li key={index}>{`Date: ${entry.date}, Miles: ${entry.miles}`}</li>
+        ))}
+      </ul>
+      <div>
+        <h3>Miles Per Week:</h3>
+        <p>{milesEntries.reduce((total, entry) => total + entry.miles, 0)}</p>
+      </div>
+    </div>
       <div className="header">
         <span>Carbon Footprint Tracker</span>
         <label className="theme-toggle">
@@ -225,16 +323,16 @@ function DashboardPage({handleLogout}) {
       <div className="chart-container">
         <div className="small-chart">
           <h3>Weekly Carbon Emissions</h3>
-          <Pie data={pieData} />
+          <Pie data={pieChartData} />
         </div>
         <div className="small-chart">
           <h3>Last Recorded Emissions</h3>
-          <Line data={lineData} />
+          <Line data={lineChartData} />
         </div>
       </div>
       {showBasicForm && (
         <div className="popup-overlay">
-          <form className="popup-form" onSubmit={(e) => handleCombinedSubmit(e, 'basicInfo')}>
+          <form className="popup-form" onSubmit={(e) => [handleCombinedSubmit(e, 'basicInfo'), handleEmissionsCalculation()]}>
             <button type="button" className="close-button" onClick={closeBasicForm}>
               X
             </button>
