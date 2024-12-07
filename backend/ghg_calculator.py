@@ -102,13 +102,22 @@ def emmissions():
     return jsonify({'emmissions': round(emmissions)}) #in lbs of carbon dioxide/week
 
 #================HOME============================================
+@app.route('/ghg_calculator/egrid_lookup', methods=['POST'])
+def egrid_lookup():
+    data = request.json
+    print("Received data:", data)  # Debugging log
+    zip = data.get('zipCode')
 
-def egrid_lookup(zip):
+     # Validate inputs
+    if zip is None:
+            return jsonify({'error': 'Missing required parameters'}), 400
+
     egrid = pd.read_excel('C:\\Users\\Kat\\OneDrive\\Documents\\GitHub\\Carbon-Footprint-Tracker\\backend\\EGRID_DATA.xlsx')
     lookup = egrid.loc[egrid['Zip'] == zip]
     e_factor = lookup['Vlookup (e_factor)'].item()
     e_factor_value = e_factor/1000
-    return round(e_factor_value, 3)
+    
+    return jsonify({'e_factor': round(e_factor_value, 3)})
     
 def natural_gas_consumption(option, input):
     if option==1: #dollars
