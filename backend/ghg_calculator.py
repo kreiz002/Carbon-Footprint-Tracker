@@ -1,5 +1,10 @@
 
 import pandas as pd
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+
+app = Flask(__name__)
+CORS(app, resources={r"/ghg_calculator/*": {"origins": "http://localhost:3000"}}) # Important: Allow requests from your frontend
 
 #REFER TO SHEET1 FROM GHG CALCULATOR.XLSX=====================================================================
 AC_electricity_percent=0.14
@@ -73,152 +78,136 @@ window_replacement_cost_savings=150 #USD
 window_replacement_energy_savings=25210000
 
 
-class Producer:
-    def __init__(self, habitants, zip, heat_src):
-        self.habitants = habitants
-        self.zip = zip
-        self.heat_src = heat_src  #Enter 1 for natural gas, 2 for electric heat, 3 for oil, 4 for propane, 5 for wood, or 6 if you do not heat your house
+#================VEHICLE============================================
+
+@app.route('/ghg_calculator/vehicle_emissions', methods=['POST'])
+def emmissions():
+    data = request.json
+    print("Received data:", data)  # Debugging log
+    miles_per_week = data.get('milesPerWeek')
+    avg_fuel_efficiency = data.get('avgFuelEfficiency')
+    
+    # Validate inputs
+    if miles_per_week is None or avg_fuel_efficiency is None:
+            return jsonify({'error': 'Missing required parameters'}), 400
+    
+    print(f"miles_per_week: {miles_per_week}, avg_fuel_efficiency: {avg_fuel_efficiency}")  # Debugging log
         
-        
-class Vehicle(Producer):
-    def __init__(self, habitants, zip, heat_src, miles_per_week, avg_fuel_efficiency, maintenance):
-        Producer.__init__(self, habitants, zip, heat_src)
-        self.miles_per_week = miles_per_week
-        self.avg_fuel_efficiency = avg_fuel_efficiency
-        self.maintenance = maintenance
+    emmissions = miles_per_week * (1/avg_fuel_efficiency) * EF_passenger_vehicle * nonCO2_vehicle_emissions_ratio #19.6, 1.01
+    efficiency = emmissions * vehicle_efficiency_improvements
+    emmissions += efficiency
 
-    def emmissions(self):
-        # miles_per_year = self.miles_per_week*52
-        # emmissions = miles_per_year * (1/self.avg_fuel_efficiency) * EF_passenger_vehicle * nonCO2_vehicle_emissions_ratio #19.6, 1.01
-        emmissions = self.miles_per_week * (1/self.avg_fuel_efficiency) * EF_passenger_vehicle * nonCO2_vehicle_emissions_ratio #19.6, 1.01
-        efficiency = emmissions * vehicle_efficiency_improvements
-        emmissions += efficiency
-        return round(emmissions) #in lbs of carbon dioxide/week
+    print("Calculated emissions:", emmissions)  # Debugging log
 
-    def emmissions_maintenance(self):
-        # miles_per_year = self.miles_per_week*52
-        # emmissions = (miles_per_year/self.avg_fuel_efficiency) * EF_passenger_vehicle * nonCO2_vehicle_emissions_ratio #19.6, 1.01
-        emmissions = (self.miles_per_week/self.avg_fuel_efficiency) * EF_passenger_vehicle * nonCO2_vehicle_emissions_ratio #19.6, 1.01
-        return round(emmissions)
+    return jsonify({'emmissions': round(emmissions)}) #in lbs of carbon dioxide/week
+
+#================HOME============================================
+
+def egrid_lookup(zip):
+    egrid = pd.read_excel('C:\\Users\\Kat\\OneDrive\\Documents\\GitHub\\Carbon-Footprint-Tracker\\backend\\EGRID_DATA.xlsx')
+    lookup = egrid.loc[egrid['Zip'] == zip]
+    e_factor = lookup['Vlookup (e_factor)'].item()
+    e_factor_value = e_factor/1000
+    return round(e_factor_value, 3)
     
-class HomeEnergy(Producer):
-    def __init__(self, habitants, zip, heat_src, green_power=False, portion_green=0):
-        Producer.__init__(self, habitants, zip, heat_src)
-        self.green_power = green_power
-        self.portion_green = portion_green
+def natural_gas_consumption(option, input):
+    if option==1: #dollars
+        emissions = (input/Natural_gas_cost_1000CF) * EF_natural_gas * 12
+    elif option==2: #thousand cubic ft
+        emissions = EF_natural_gas * input * 12
+    elif option==3: #therms
+        emissions = EF_natural_gas_therm * input * 12  
+    return round(emissions)
 
-    def egrid_lookup(self):
-        egrid = pd.read_excel('C:\\Users\\Kat\\OneDrive\\Documents\\GitHub\\Carbon-Footprint-Tracker\\backend\\EGRID_DATA.xlsx')
-        lookup = egrid.loc[egrid['Zip'] == self.zip]
-        e_factor = lookup['Vlookup (e_factor)'].item()
-        e_factor_value = e_factor/1000
-        return round(e_factor_value, 3)
+def electricity_consumption(option, input, e_factor_value):
+    if option==1: #dollars
+        emissions = (input/cost_per_kWh) * e_factor_value * 12
+    elif option==2: #kWh
+        emissions = input * e_factor_value * 12
+    return round(emissions)
+
+def oil_consumption(option, input):
+    if option==1: #dollars
+        emissions = (input/fuel_oil_cost) * EF_fuel_oil_gallon * 12
+    elif option==2: #gallons
+        emissions = EF_fuel_oil_gallon * input * 12
+    return emissions
+
+def propane_consumption(option, input):
+    if option==1: #dollars
+        emissions = (input/propane_cost) * EF_propane * 12
+    elif option==2: #gallons
+        emissions = EF_propane * input * 12
+    return emissions
+
+def thermostat_savings(heatsrc_emissions, electricity_consumption, heat_src, degree_difference, heat): #degree
+    if heat == True:
+        if heat_src==1:
+            emissions = heatsrc_emissions*heating_percent_NG*thermostat_heating_savings*degree_difference
+        elif heat_src==2:
+            emissions = heatsrc_emissions*heating_percent_electricity*thermostat_heating_savings*degree_difference
+        elif heat_src==3:
+            emissions = heatsrc_emissions*heating_percent_fuel_oil*thermostat_heating_savings*degree_difference
+        elif heat_src==4:
+            emissions = heatsrc_emissions*heating_percent_propane*thermostat_heating_savings*degree_difference
+        else:
+            emissions = 0
+    else:
+        emissions = electricity_consumption*AC_electricity_percent*thermostat_cooling_savings*degree_difference
+    return round(emissions)
+
+def laundry_loaded_cold(laundry_count, e_factor_value):
+    emissions = kWh_per_load_laundry*e_factor_value*laundry_count #per week
+    return round(emissions)
+
+def dryer_savings(e_factor_value):
+    emissions = ((dryer_energy/2)*e_factor_value)/52
+    return round(emissions)
+
+
+#================WASTE============================================
+
+def total_waste(habitants):
+    # emissions = self.habitants * average_waste_emissions 
+    emissions = (habitants * average_waste_emissions)/52 #per week
+    return round(emissions)
+
+def total_waste_after_recycling(habitants, cans, plastic, glass, newspaper, magazines):      
+    if cans==True:
+        cans_waste = habitants * (metal_recycling_avoided_emissions/52)
+    else:
+        cans_waste = 0
+
+    if plastic==True:
+        plastic_waste = habitants * (plastic_recycling_avoided_emissions/52)
+    else:
+        plastic_waste = 0  
+
+    if glass==True:
+        glass_waste = habitants * (glass_recycling_avoided_emissions/52)
+    else:
+        glass_waste = 0 
+
+    if newspaper==True:
+        newspaper_waste = habitants * (newspaper_recycling_avoided_emissions/52)
+    else:
+        newspaper_waste = 0  
+
+    if magazines==True:
+        magazines_waste = habitants * (mag_recycling_avoided_emissions/52)
+    else:
+        magazines_waste = 0
     
-    def natural_gas_consumption(self, option, input):
-        if option==1: #dollars
-            emissions = (input/Natural_gas_cost_1000CF) * EF_natural_gas * 12
-        elif option==2: #thousand cubic ft
-            emissions = EF_natural_gas * input * 12
-        elif option==3: #therms
-            emissions = EF_natural_gas_therm * input * 12  
-        return round(emissions)
-    
-    def electricity_consumption(self, option, input, e_factor_value):
-        if option==1: #dollars
-            emissions = (input/cost_per_kWh) * e_factor_value * 12
-        elif option==2: #kWh
-            emissions = input * e_factor_value * 12
-        return round(emissions)
-    
-    def oil_consumption(self, option, input):
-        if option==1: #dollars
-            emissions = (input/fuel_oil_cost) * EF_fuel_oil_gallon * 12
-        elif option==2: #gallons
-            emissions = EF_fuel_oil_gallon * input * 12
-        return emissions
-    
-    def propane_consumption(self, option, input):
-        if option==1: #dollars
-            emissions = (input/propane_cost) * EF_propane * 12
-        elif option==2: #gallons
-            emissions = EF_propane * input * 12
-        return emissions
-
-    def thermostat_savings(self, heatsrc_emissions, electricity_consumption, heat_src, degree_difference, heat): #degree
-        if heat == True:
-            if heat_src==1:
-                emissions = heatsrc_emissions*heating_percent_NG*thermostat_heating_savings*degree_difference
-            elif heat_src==2:
-                emissions = heatsrc_emissions*heating_percent_electricity*thermostat_heating_savings*degree_difference
-            elif heat_src==3:
-                emissions = heatsrc_emissions*heating_percent_fuel_oil*thermostat_heating_savings*degree_difference
-            elif heat_src==4:
-                emissions = heatsrc_emissions*heating_percent_propane*thermostat_heating_savings*degree_difference
-            else:
-                emissions = 0
-        else:
-            emissions = electricity_consumption*AC_electricity_percent*thermostat_cooling_savings*degree_difference
-        return round(emissions)
-
-    def laundry_loaded_cold(self, laundry_count, e_factor_value):
-        emissions = kWh_per_load_laundry*e_factor_value*laundry_count #per week
-        return round(emissions)
-    
-    def dryer_savings(self, e_factor_value):
-        emissions = ((dryer_energy/2)*e_factor_value)/52
-        return round(emissions)
-
-class Waste(Producer):
-    def __init__(self, habitants, zip, heat_src):
-        Producer.__init__(self, habitants, zip, heat_src)
-
-    def total_waste(self):
-        # emissions = self.habitants * average_waste_emissions 
-        emissions = (self.habitants * average_waste_emissions)/52 #per week
-        return round(emissions)
-
-    def total_waste_after_recycling(self, cans, plastic, glass, newspaper, magazines):      
-        if cans==True:
-            cans_waste = self.habitants * (metal_recycling_avoided_emissions/52)
-        else:
-            cans_waste = 0
-
-        if plastic==True:
-            plastic_waste = self.habitants * (plastic_recycling_avoided_emissions/52)
-        else:
-            plastic_waste = 0  
-
-        if glass==True:
-            glass_waste = self.habitants * (glass_recycling_avoided_emissions/52)
-        else:
-            glass_waste = 0 
-
-        if newspaper==True:
-            newspaper_waste = self.habitants * (newspaper_recycling_avoided_emissions/52)
-        else:
-            newspaper_waste = 0  
-
-        if magazines==True:
-            magazines_waste = self.habitants * (mag_recycling_avoided_emissions/52)
-        else:
-            magazines_waste = 0
-        
-        emissions = self.total_waste() + cans_waste + plastic_waste + glass_waste + newspaper_waste + magazines_waste
-        return round(emissions)    
+    emissions = total_waste() + cans_waste + plastic_waste + glass_waste + newspaper_waste + magazines_waste
+    return round(emissions)    
 
 
-
+if __name__ == '__main__':
+    app.run(debug=True)
 #total emissions is sum of results of all functions in child nodes
 
 
 
-
-v1 = Vehicle(1, 33178, 2, 75, 21.6, 1)
-v1.zip = 33178
-
-h1 = HomeEnergy(1, 33178, 2, False, 0)
-
-w1 = Waste(1, 33178, 1)
 
 # print(h1.zip)
 # print(v1.emmissions())
@@ -231,5 +220,5 @@ w1 = Waste(1, 33178, 1)
 # print(h1.laundry_loaded_cold(2, h1.egrid_lookup()))
 # print(h1.dryer_savings(h1.egrid_lookup()))
 
-print(w1.total_waste())
-print(w1.total_waste_after_recycling(True, False, False, False, False))
+# print(w1.total_waste())
+# print(w1.total_waste_after_recycling(True, False, False, False, False))

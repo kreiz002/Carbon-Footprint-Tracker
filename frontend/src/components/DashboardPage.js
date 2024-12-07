@@ -145,7 +145,7 @@ function DashboardPage({handleLogout}) {
     }
     if (formType === 'dailyEntry') {
       const { date, miles } = formData;
-      const transportation = calculateTransportationEmissions(formData.miles, 21.6); // Pass form values
+      const transportation = transportEmmissions; // Pass form values
       const homeEnergy = calculateHomeEnergyEmissions(44, formBasicData.primaryHeatingSource); // Example or fetched values
       const waste = calculateWasteEmissions(formBasicData.occupants, formData.recycled); // Example or fetched values
       updatePieChart(transportation, homeEnergy, waste);
@@ -218,19 +218,51 @@ function DashboardPage({handleLogout}) {
         alert('Error while submitting: ' + error.message);
     }
 };
-  
-const calculateTransportationEmissions = (avgFuelEfficiency) => {
-  const EF_passenger_vehicle = 19.6; // Emission factor (lbs CO2/mile)
-  const nonCO2_vehicle_emissions_ratio = 1.01; // Adjustment factor
-  const milesPerWeek = milesEntries.reduce((total, entry) => total + entry.miles, 0);
-  console.log("Miles Per Week:", milesPerWeek);
-  return (milesPerWeek / avgFuelEfficiency) * EF_passenger_vehicle * nonCO2_vehicle_emissions_ratio;
+
+const [transportEmmissions, setTransportEmmissions] = useState(0)
+
+useEffect(() => {
+  async function fetchTransportEmissions() {
+    try {
+      const milesPerWeek = milesEntries.reduce((total, entry) => total + entry.miles, 0); // Calculate weekly miles
+      const avgFuelEfficiency = 21.6; // Replace with a user-provided or default value
+
+      console.log("Sending data to backend:", { milesPerWeek, avgFuelEfficiency }); // Debugging log
+
+      const response = await axios.post('http://127.0.0.1:5000/ghg_calculator/vehicle_emissions', {
+        milesPerWeek, // Calculate weekly miles
+        avgFuelEfficiency, // Default or user-provided average fuel efficiency
+      });
+
+      console.log("Response from backend:", response.data); // Debugging log
+      setTransportEmmissions(response.data.emmissions);
+    } catch (error) {
+      console.error('Error fetching transport emissions:', error);
+    }
+  }
+
+  fetchTransportEmissions();
+}, [milesEntries]);
+
+useEffect(() => {
+  // Recalculate emissions whenever transportEmissions changes
+  handleEmissionsCalculation();
+}, [transportEmmissions]);
+
+const handleEmissionsCalculation = () => {
+  const transportation = transportEmmissions; // Use updated state
+  const homeEnergy = calculateHomeEnergyEmissions(44, formBasicData.primaryHeatingSource); // Example or fetched values
+  const waste = calculateWasteEmissions(formBasicData.occupants, formData.recycled); // Example or fetched values
+
+  console.log("Updated transportation emissions:", transportation); // Debug log
+  updatePieChart(transportation, homeEnergy, waste);
 };
 
 const calculateHomeEnergyEmissions = (electricityUsage, heatingSource, otherFactors) => {
   const EF_natural_gas = 119.58; // Example: Emission factor for natural gas
   const EF_electricity = 14019.99772; // Example: Emission factor for electricity
   // Logic depending on the heating source and other factors
+  const e_factor_value = 1232.428 //average e_factor_value per zip code
   return (electricityUsage/365) * (heatingSource === 1 ? EF_natural_gas : EF_electricity);
 };
 
@@ -244,7 +276,7 @@ const [pieChartData, setPieChartData] = useState({
   labels: ['Transportation', 'Home Energy', 'Waste'],
   datasets: [
     {
-      data: [0, 0, 0], // Initial values
+      data: [50, 50, 50], // Initial values
       backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
     },
   ],
@@ -263,14 +295,8 @@ const updatePieChart = (transportation, homeEnergy, waste) => {
   });
 };
 
-// Call this function dynamically, e.g., on form submission
-const handleEmissionsCalculation = () => {
-  const transportation = calculateTransportationEmissions(21.6); // Example values
-  const homeEnergy = calculateHomeEnergyEmissions(44, formBasicData.heat_src); // Example values
-  const waste = calculateWasteEmissions(formBasicData.occupants, formData.recycled); // Example values
 
-  updatePieChart(transportation, homeEnergy, waste);
-};
+
 
   return (
   
@@ -283,8 +309,8 @@ const handleEmissionsCalculation = () => {
         ))}
       </ul>
       <div>
-        <h3>Miles Per Week:</h3>
-        <p>{milesEntries.reduce((total, entry) => total + entry.miles, 0)}</p>
+        <h3>Emmissions:</h3>
+        <p>{transportEmmissions}</p>
       </div>
     </div>
       <div className="header">
