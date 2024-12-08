@@ -4,13 +4,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app, origins="http://localhost:3000")
-
-@app.after_request
-def apply_cors_headers(response):
-    print("CORS Headers Applied:", response.headers)
-    return response
-
+CORS(app, resources={r"/ghg_calculator/*": {"origins": ["http://127.0.0.1:8000", "http://localhost:3000"]}})
 
 #REFER TO SHEET1 FROM GHG CALCULATOR.XLSX=====================================================================
 AC_electricity_percent=0.14
@@ -110,10 +104,22 @@ def emmissions():
 #================HOME============================================
 
 def egrid_lookup(zip):
+    # Load the CSV file
     egrid = pd.read_csv('C:\\Users\\Kat\\OneDrive\\Documents\\GitHub\\Carbon-Footprint-Tracker\\backend\\EGRID_DATA.csv')
+    
+    # Ensure consistent data types
+    zip = int(zip)  # Convert zip to integer
+    egrid['Zip'] = egrid['Zip'].fillna(0).astype(int)  # Clean and convert Zip column to integer
+    
+    # Lookup the row with the matching zip code
     lookup = egrid.loc[egrid['Zip'] == zip]
+    
+    if lookup.empty:
+        raise ValueError(f"No data found for ZIP code: {zip}")
+    
+    # Extract and calculate the e_factor value
     e_factor = lookup['Vlookup (e_factor)'].item()
-    e_factor_value = e_factor/1000
+    e_factor_value = e_factor / 1000
     return round(e_factor_value, 3)
     
 def natural_gas_consumption(option, input):
@@ -126,14 +132,10 @@ def natural_gas_consumption(option, input):
     return round(emissions)
 
 
-@app.route('/ghg_calculator/electricity_consumption', methods=['POST', 'OPTIONS'])
+@app.route('/ghg_calculator/electricity_consumption', methods=['POST'])
 def electricity_consumption():
-    if request.method == 'OPTIONS':
-        response = app.response_class(status=204)
-        response.headers['Access-Control-Allow-Origin'] = 'http://localhost:3000'
-        response.headers['Access-Control-Allow-Methods'] = 'POST'
-        response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
-        return response
+    response = app.response_class(status=204)
+    response.headers['Access-Control-Allow-Origin'] = 'http://localhost:3000'
     # Handle POST request here
     data = request.json
     print("Received data:", data)
@@ -141,7 +143,10 @@ def electricity_consumption():
     cost = data.get('cost')
     if zip is None or cost is None:
         return jsonify({'error': 'Missing required parameters'}), 400
-    emissions = ((cost / cost_per_kWh) * egrid_lookup(zip)) / 4
+
+    e_factor_value = egrid_lookup(zip)
+    true_cost = float(cost)/cost_per_kWh
+    emissions = (true_cost * e_factor_value) / 4
     return jsonify({'emissions': round(emissions)})
 
 
@@ -186,10 +191,17 @@ def dryer_savings(e_factor_value):
 
 #================WASTE============================================
 
-def total_waste(habitants):
+@app.route('/ghg_calculator/waste', methods=['POST'])
+def total_waste():
     # emissions = self.habitants * average_waste_emissions 
+    data = request.json
+    print("Received data:", data)
+    habitants = data.get('habitants')
+    if habitants is None:
+        return jsonify({'error': 'Missing required parameters'}), 400
     emissions = (habitants * average_waste_emissions)/52 #per week
-    return round(emissions)
+
+    return jsonify({'waste': round(emissions)})
 
 def total_waste_after_recycling(habitants, cans, plastic, glass, newspaper, magazines):      
     if cans==True:

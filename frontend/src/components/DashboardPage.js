@@ -147,12 +147,14 @@ function DashboardPage({handleLogout}) {
             heat_src: formBasicData.primaryHeatingSource,
             energy: formBasicData.energyCost,
         };
+
+        fetchWasteEmissions(formBasicData.occupants);
     }
     if (formType === 'dailyEntry') {
       const { date, miles } = formData;
       const transportation = transportEmmissions; // Pass form values
       const homeEnergy = homeEmmissions; // Example or fetched values
-      const waste = calculateWasteEmissions(formBasicData.occupants, formData.recycled); // Example or fetched values
+      const waste = wasteEmissions; // Example or fetched values
       updatePieChart(transportation, homeEnergy, waste);
 
       // Ensure `miles` is a number
@@ -275,7 +277,7 @@ const fetchHomeEmissions = async () => {
 
       // Update state and pie chart
       setHomeEmmissions(newHomeEmissions);
-      updatePieChart(transportEmmissions, newHomeEmissions, calculateWasteEmissions(formBasicData.occupants, formData.recycled));
+      updatePieChart(transportEmmissions, newHomeEmissions, wasteEmissions);
     } else {
       console.error("Error: Unexpected response status", response.status);
     }
@@ -283,6 +285,38 @@ const fetchHomeEmissions = async () => {
     console.error("Error while fetching home emissions:", error);
   }
 };
+
+const [wasteEmissions, setWasteEmissions] = useState(0);
+
+const fetchWasteEmissions = async (habitants) => {
+  try {
+    const payload = { habitants: parseInt(habitants, 10) };
+    console.log("Sending data to backend for waste emissions:", payload);
+
+    const response = await axios.post('http://127.0.0.1:5000/ghg_calculator/waste', payload, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (response.status === 200) {
+      console.log("Response from backend for waste emissions:", response.data);
+      const newWasteEmissions = response.data.waste;
+
+      // Update state
+      setWasteEmissions(newWasteEmissions);
+
+      // Update the pie chart
+      updatePieChart(transportEmmissions, homeEmmissions, newWasteEmissions);
+    } else {
+      console.error("Error: Unexpected response status", response.status);
+    }
+  } catch (error) {
+    console.error("Error while fetching waste emissions:", error);
+  }
+};
+
+
 
 useEffect(() => {
   // Recalculate emissions whenever transportEmissions changes
@@ -292,7 +326,7 @@ useEffect(() => {
 const handleEmissionsCalculation = () => {
   const transportation = transportEmmissions; // Use updated state
   const homeEnergy = homeEmmissions // Example or fetched values
-  const waste = calculateWasteEmissions(formBasicData.occupants, formData.recycled); // Example or fetched values
+  const waste = wasteEmissions; // Example or fetched values
 
   console.log("Updated transportation emissions:", transportation); // Debug log
   updatePieChart(transportation, homeEnergy, waste);
