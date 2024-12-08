@@ -4,7 +4,13 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app, resources={r"/ghg_calculator/*": {"origins": "http://localhost:3000"}}) # Important: Allow requests from your frontend
+CORS(app, origins="http://localhost:3000")
+
+@app.after_request
+def apply_cors_headers(response):
+    print("CORS Headers Applied:", response.headers)
+    return response
+
 
 #REFER TO SHEET1 FROM GHG CALCULATOR.XLSX=====================================================================
 AC_electricity_percent=0.14
@@ -104,7 +110,7 @@ def emmissions():
 #================HOME============================================
 
 def egrid_lookup(zip):
-    egrid = pd.read_excel('C:\\Users\\Kat\\OneDrive\\Documents\\GitHub\\Carbon-Footprint-Tracker\\backend\\EGRID_DATA.xlsx')
+    egrid = pd.read_csv('C:\\Users\\Kat\\OneDrive\\Documents\\GitHub\\Carbon-Footprint-Tracker\\backend\\EGRID_DATA.csv')
     lookup = egrid.loc[egrid['Zip'] == zip]
     e_factor = lookup['Vlookup (e_factor)'].item()
     e_factor_value = e_factor/1000
@@ -119,12 +125,25 @@ def natural_gas_consumption(option, input):
         emissions = EF_natural_gas_therm * input * 12  
     return round(emissions)
 
-def electricity_consumption(option, input, e_factor_value):
-    if option==1: #dollars
-        emissions = (input/cost_per_kWh) * e_factor_value * 12
-    elif option==2: #kWh
-        emissions = input * e_factor_value * 12
-    return round(emissions)
+
+@app.route('/ghg_calculator/electricity_consumption', methods=['POST', 'OPTIONS'])
+def electricity_consumption():
+    if request.method == 'OPTIONS':
+        response = app.response_class(status=204)
+        response.headers['Access-Control-Allow-Origin'] = 'http://localhost:3000'
+        response.headers['Access-Control-Allow-Methods'] = 'POST'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        return response
+    # Handle POST request here
+    data = request.json
+    print("Received data:", data)
+    zip = data.get('zip')
+    cost = data.get('cost')
+    if zip is None or cost is None:
+        return jsonify({'error': 'Missing required parameters'}), 400
+    emissions = ((cost / cost_per_kWh) * egrid_lookup(zip)) / 4
+    return jsonify({'emissions': round(emissions)})
+
 
 def oil_consumption(option, input):
     if option==1: #dollars
@@ -222,3 +241,5 @@ if __name__ == '__main__':
 
 # print(w1.total_waste())
 # print(w1.total_waste_after_recycling(True, False, False, False, False))
+
+print(egrid_lookup(33178))

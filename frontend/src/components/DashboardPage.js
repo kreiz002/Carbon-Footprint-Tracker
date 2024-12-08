@@ -40,6 +40,7 @@ function DashboardPage({handleLogout}) {
     occupants: '',
     zipCode: '',
     primaryHeatingSource: '',
+    energyCost: '',
   });
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -53,6 +54,8 @@ function DashboardPage({handleLogout}) {
   });
   const [theme, setTheme] = useState('light'); // Light theme by default
   const [milesEntries, setMilesEntries] = useState([]); // Array to store all miles entries
+  const [zipEntry, setZipEntry] = useState(null); // Array to store all miles entries
+  const [costEntry, setCostEntry] = useState(null); // Array to store all miles entries
 
 
   useEffect(() => {
@@ -90,6 +93,7 @@ function DashboardPage({handleLogout}) {
       occupants: '',
       zipCode: '',
       primaryHeatingSource: '',
+      energyCost: '',
     });
   };
 
@@ -130,7 +134,7 @@ function DashboardPage({handleLogout}) {
       },
     ],
   });
-  
+
   const handleCombinedSubmit = async (e, formType) => {
     e.preventDefault();
 
@@ -141,12 +145,13 @@ function DashboardPage({handleLogout}) {
             habitants: formBasicData.occupants,
             zip: formBasicData.zipCode,
             heat_src: formBasicData.primaryHeatingSource,
+            energy: formBasicData.energyCost,
         };
     }
     if (formType === 'dailyEntry') {
       const { date, miles } = formData;
       const transportation = transportEmmissions; // Pass form values
-      const homeEnergy = calculateHomeEnergyEmissions(44, formBasicData.primaryHeatingSource); // Example or fetched values
+      const homeEnergy = homeEmmissions; // Example or fetched values
       const waste = calculateWasteEmissions(formBasicData.occupants, formData.recycled); // Example or fetched values
       updatePieChart(transportation, homeEnergy, waste);
 
@@ -159,6 +164,8 @@ function DashboardPage({handleLogout}) {
 
       //Add the new miles entry to the array
       setMilesEntries((prevEntries) => [...prevEntries, {date, miles: milesDriven}]);
+      setZipEntry(formBasicData.zipCode);
+      setCostEntry(formBasicData.energyCost)
   
       payload.dailyEntry = { 
         date: formData.date, 
@@ -197,7 +204,6 @@ function DashboardPage({handleLogout}) {
           };
       });
   }  
-
     try {
         const response = await axios.post('http://127.0.0.1:8000/api/submit-data/', payload, {
             withCredentials: true,
@@ -220,6 +226,7 @@ function DashboardPage({handleLogout}) {
 };
 
 const [transportEmmissions, setTransportEmmissions] = useState(0)
+const [homeEmmissions, setHomeEmmissions] = useState(0)
 
 useEffect(() => {
   async function fetchTransportEmissions() {
@@ -244,6 +251,39 @@ useEffect(() => {
   fetchTransportEmissions();
 }, [milesEntries]);
 
+const fetchHomeEmissions = async () => {
+  try {
+    // Prepare the payload from form data
+    const payload = {
+      zip: formBasicData.zipCode,
+      cost: formBasicData.energyCost,
+    };
+
+    console.log("Sending data to backend:", payload); // Debugging log
+
+    // Make the POST request
+    const response = await axios.post('http://127.0.0.1:5000/ghg_calculator/electricity_consumption', payload, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    // Handle successful response
+    if (response.status === 200) {
+      console.log("Response from API:", response.data);
+      const newHomeEmissions = response.data.emissions;
+
+      // Update state and pie chart
+      setHomeEmmissions(newHomeEmissions);
+      updatePieChart(transportEmmissions, newHomeEmissions, calculateWasteEmissions(formBasicData.occupants, formData.recycled));
+    } else {
+      console.error("Error: Unexpected response status", response.status);
+    }
+  } catch (error) {
+    console.error("Error while fetching home emissions:", error);
+  }
+};
+
 useEffect(() => {
   // Recalculate emissions whenever transportEmissions changes
   handleEmissionsCalculation();
@@ -251,19 +291,11 @@ useEffect(() => {
 
 const handleEmissionsCalculation = () => {
   const transportation = transportEmmissions; // Use updated state
-  const homeEnergy = calculateHomeEnergyEmissions(44, formBasicData.primaryHeatingSource); // Example or fetched values
+  const homeEnergy = homeEmmissions // Example or fetched values
   const waste = calculateWasteEmissions(formBasicData.occupants, formData.recycled); // Example or fetched values
 
   console.log("Updated transportation emissions:", transportation); // Debug log
   updatePieChart(transportation, homeEnergy, waste);
-};
-
-const calculateHomeEnergyEmissions = (electricityUsage, heatingSource, otherFactors) => {
-  const EF_natural_gas = 119.58; // Example: Emission factor for natural gas
-  const EF_electricity = 14019.99772; // Example: Emission factor for electricity
-  // Logic depending on the heating source and other factors
-  const e_factor_value = 1232.428 //average e_factor_value per zip code
-  return (electricityUsage/365) * (heatingSource === 1 ? EF_natural_gas : EF_electricity);
 };
 
 const calculateWasteEmissions = (habitants, recycling) => {
@@ -358,7 +390,7 @@ const updatePieChart = (transportation, homeEnergy, waste) => {
       </div>
       {showBasicForm && (
         <div className="popup-overlay">
-          <form className="popup-form" onSubmit={(e) => [handleCombinedSubmit(e, 'basicInfo'), handleEmissionsCalculation()]}>
+          <form className="popup-form" onSubmit={(e) => [handleCombinedSubmit(e, 'basicInfo'), handleEmissionsCalculation(), fetchHomeEmissions()]}>
             <button type="button" className="close-button" onClick={closeBasicForm}>
               X
             </button>
@@ -397,6 +429,22 @@ const updatePieChart = (transportation, homeEnergy, waste) => {
                 type="text"
                 name="primaryHeatingSource"
                 value={formBasicData.primaryHeatingSource}
+                onChange={(e) => {
+                  if (/^\d*$/.test(e.target.value)) {
+                    handleBasicInputChange(e);
+                  }
+                }}
+                required
+              />
+            </label>
+            <label>
+              <span>
+                What is the cost (in USD) of using electricity per month?:
+              </span>
+              <input
+                type="text"
+                name="energyCost"
+                value={formBasicData.energyCost}
                 onChange={(e) => {
                   if (/^\d*$/.test(e.target.value)) {
                     handleBasicInputChange(e);
